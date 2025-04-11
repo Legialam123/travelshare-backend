@@ -1,0 +1,38 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /TravelShare
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 500MB
+  datasource:
+    url: ${DBMS_CONNECTION:jdbc:postgresql://localhost:5432/TravelShare}
+    driverClassName: "org.postgresql.Driver"
+    username: ${DBMS_USERNAME:postgres}
+    password: ${DBMS_PASSWORD:admin}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  signerKey: "1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij"
+  valid-duration: 3600 # in second
+  refreshable-duration: 360000 # in seconds
+
+app:
+  invitation:
+    base-url: http://localhost:8080/TravelShare/api/v1/invitation
+  file:
+    storage-dir: D:\OneDrive - ootechvn1\Study\NL ngành\Code\TravelShare\src\main\resources\static\upload
+    download-prefix: http://localhost:8080/TravelShare/media/download/
+  admin:
+    username: admin
+    password: ${ADMIN_PASSWORD:admin123}
+    email: admin@travelshare.com
