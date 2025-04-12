@@ -31,7 +31,9 @@ public enum ErrorCode {
     PARTICIPANT_NOT_EXISTED(1020, "Participant not existed", HttpStatus.NOT_FOUND),
     INVALID_SPLIT_TYPE(1021, "Invalid split type", HttpStatus.NOT_FOUND),
     INVALID_REQUEST(1022, "Invalid request", HttpStatus.NOT_FOUND),
-    FILE_NOT_FOUND(1022, "File not found", HttpStatus.NOT_FOUND)
+    FILE_NOT_FOUND(1022, "File not found", HttpStatus.NOT_FOUND),
+    SETTLEMENT_NOT_FOUND(1023, "Settlement not found", HttpStatus.NOT_FOUND)
+
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

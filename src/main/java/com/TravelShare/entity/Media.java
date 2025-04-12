@@ -66,6 +66,10 @@ public class Media {
     @JoinColumn(name = "user_id")
     User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "settlement_id")
+    Settlement settlement;
+
     public enum MediaType {
         IMAGE, VIDEO, AUDIO, DOCUMENT, OTHER
     }
