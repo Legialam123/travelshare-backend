@@ -35,6 +35,8 @@ public class ExpenseCreationRequest {
 
     List<Long> attachmentIds;
 
+    Long participantId;
+
     @NotNull(message = "Split type is required")
     Expense.SplitType splitType = Expense.SplitType.EQUAL;
 

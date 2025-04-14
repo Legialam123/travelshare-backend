@@ -1,15 +1,12 @@
 package com.TravelShare.dto.response;
 
 import com.TravelShare.entity.*;
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
 
 @Data
 @NoArgsConstructor
@@ -19,15 +16,25 @@ import java.util.Set;
 public class ExpenseResponse {
     Long id;
     String title;
+
     String description;
+
     BigDecimal amount;
+
     CurrencyResponse currency;
-    TripResponse trip;
-    UserResponse payer;
+
+    TripSummaryResponse trip;
+
+    TripParticipantResponse payer;
+
     ExpenseCategoryResponse category;
-    List<MediaResponse> attachmentIds;
-    List<ExpenseSplitResponse> splitIds;
+
+    List<MediaResponse> attachments;
+
+    List<ExpenseSplitResponse> splits;
+
     Expense.SplitType splitType;
+
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 

@@ -12,7 +12,6 @@ import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.ExpenseMapper;
 import com.TravelShare.repository.*;
 import jakarta.transaction.Transactional;
-import jdk.jfr.Category;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -64,12 +63,14 @@ public class ExpenseService {
         Trip trip = tripRepository.findById(request.getTripId())
                 .orElseThrow(() -> new AppException(ErrorCode.TRIP_NOT_EXISTED));
 
-        User payer = userRepository.findByUsername(username)
+        TripParticipant payer = tripParticipantRepository.findById(request.getParticipantId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         // Create expense
         Expense expense = expenseMapper.toExpense(request);
-        expense.setSplits(new HashSet<>());
         // Validate and retrieve entities
         Currency currency;
         if (request.getCurrency() == null || request.getCurrency().isEmpty()) {
@@ -85,6 +86,7 @@ public class ExpenseService {
         expense.setTrip(trip);
         expense.setPayer(payer);
         expense.setCreatedAt(LocalDateTime.now());
+        expense.setCreatedBy(user);
 
         // Handle attachments if any
         if (request.getAttachmentIds() != null && !request.getAttachmentIds().isEmpty()) {
@@ -117,10 +119,11 @@ public class ExpenseService {
 
     private void createAmountSplits(Expense expense, Set<ExpenseSplitCreationRequest> splitRequests) {
         for (ExpenseSplitCreationRequest splitRequest : splitRequests) {
+            boolean isPayer = splitRequest.getParticipantId().equals(expense.getPayer().getId());
             ExpenseSplit split = ExpenseSplit.builder()
                     .expense(expense)
                     .amount(splitRequest.getAmount())
-                    .payer(splitRequest.isPayer())
+                    .payer(isPayer)
                     .settlementStatus(ExpenseSplit.SettlementStatus.PENDING)
                     .build();
             if (splitRequest.getParticipantId() != null) {
@@ -135,12 +138,13 @@ public class ExpenseService {
 
     private void createPercentageSplits(Expense expense, Set<ExpenseSplitCreationRequest> splitRequests) {
         for (ExpenseSplitCreationRequest splitRequest : splitRequests) {
+            boolean isPayer = splitRequest.getParticipantId().equals(expense.getPayer().getId());
             BigDecimal amount = expense.getAmount().multiply(splitRequest.getPercentage()).divide(BigDecimal.valueOf(100));
             ExpenseSplit split = ExpenseSplit.builder()
                     .expense(expense)
                     .amount(amount)
                     .percentage(splitRequest.getPercentage())
-                    .payer(splitRequest.isPayer())
+                    .payer(isPayer)
                     .settlementStatus(ExpenseSplit.SettlementStatus.PENDING)
                     .build();
             if (splitRequest.getParticipantId() != null) {
@@ -179,8 +183,7 @@ public class ExpenseService {
         BigDecimal count = BigDecimal.valueOf(trip.getParticipants().size());
         BigDecimal equalAmount = expense.getAmount().divide(count, 2, RoundingMode.HALF_UP);
         for (TripParticipant participant : trip.getParticipants()) {
-            boolean isPayer = participant.getUser() != null &&
-                    participant.getUser().getId().equals(expense.getPayer().getId());
+            boolean isPayer = participant.getId().equals(expense.getPayer().getId());
             ExpenseSplit split = ExpenseSplit.builder()
                     .expense(expense)
                     .participant(participant)
@@ -235,7 +238,7 @@ public class ExpenseService {
                             })
                             .collect(Collectors.toSet());
                     request.setSplits(autoSplits);
-                };
+                }
                 // Tiến hành xử lý bình thường
                 updateExpenseSplits(expense, request.getSplits());
             } else {
@@ -282,7 +285,7 @@ public class ExpenseService {
                 .filter(s -> s.getParticipant() != null)
                 .filter(s -> !requestParticipantIds.contains(s.getParticipant().getId()))
                 .toList();
-        expense.getSplits().removeAll(toRemove);
+        toRemove.forEach(expense.getSplits()::remove);
     }
 
     private void updateSplitFields(ExpenseSplit split, ExpenseSplitUpdateRequest request) {

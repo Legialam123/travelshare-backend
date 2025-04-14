@@ -24,9 +24,11 @@ public class Trip {
     String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_id", nullable = false)
     User createdBy;
 
     LocalDateTime createdAt;
+
     Double budgetLimit;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -3,6 +3,7 @@ package com.TravelShare.mapper;
 import com.TravelShare.dto.request.UserCreationRequest;
 import com.TravelShare.dto.request.UserUpdateRequest;
 import com.TravelShare.dto.response.UserResponse;
+import com.TravelShare.dto.response.UserSummaryResponse;
 import com.TravelShare.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,6 +17,8 @@ public interface UserMapper {
     User toUser(UserCreationRequest request);
 
     UserResponse toUserResponse(User user);
+
+    UserSummaryResponse toUserSummaryResponse(User user);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "trips", ignore = true)

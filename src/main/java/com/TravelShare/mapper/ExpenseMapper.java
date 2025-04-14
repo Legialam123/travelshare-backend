@@ -17,9 +17,9 @@ public interface ExpenseMapper {
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "trip.createdBy", ignore = true)
     @Mapping(target = "trip.defaultCurrency", ignore = true)
+    @Mapping(target = "payer", ignore = true)
     Expense toExpense(ExpenseCreationRequest request);
 
-    @Mapping(source = "trip.createdBy.id", target = "trip.createdBy")
     @Mapping(source = "trip.defaultCurrency.code", target = "trip.defaultCurrency")
     @Mapping(expression = "java(calculateTotalSettled(expense))", target = "totalSettled")
     @Mapping(expression = "java(calculateTotalPending(expense))", target = "totalPending")

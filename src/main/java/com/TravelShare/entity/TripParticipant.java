@@ -36,9 +36,9 @@ public class TripParticipant {
     InvitationStatus status = InvitationStatus.PENDING;
 
     @Column(nullable = false)
-    private String role; // ADMIN, MEMBER, VIEWER,....
+    String role; // ADMIN, MEMBER, VIEWER,....
 
-    private LocalDateTime joinedAt;
+    LocalDateTime joinedAt;
 
     public enum InvitationStatus {
         PENDING, ACTIVE, DECLINED

@@ -40,16 +40,18 @@ public class Expense {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payer_id", nullable = false)
-    User payer;
+    TripParticipant payer;
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     ExpenseCategory category;
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     Set<Media> attachments = new HashSet<>();
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     Set<ExpenseSplit> splits = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
@@ -58,6 +60,10 @@ public class Expense {
 
     @Column(nullable = false)
     LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_id", nullable = false)
+    User createdBy;
 
     LocalDateTime updatedAt;
 
