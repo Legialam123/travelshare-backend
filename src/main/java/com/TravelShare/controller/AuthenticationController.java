@@ -9,6 +9,7 @@ import com.TravelShare.dto.response.AuthenticationResponse;
 import com.TravelShare.dto.response.IntrospectResponse;
 import com.TravelShare.service.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,8 +28,9 @@ public class AuthenticationController {
     AuthenticationService  authenticationService;
 
     @PostMapping("/login")
-    ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
-        var result = authenticationService.authenticate(request);
+    ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request,
+                                                     HttpServletRequest httpRequest) {
+        var result = authenticationService.authenticate(request, httpRequest);
         return ApiResponse.<AuthenticationResponse>builder().result(result).build();
     }
 
@@ -40,9 +42,10 @@ public class AuthenticationController {
     }
 
     @PostMapping("/refresh")
-    ApiResponse<AuthenticationResponse> authenticate(@RequestBody RefreshRequest request)
+    ApiResponse<AuthenticationResponse> authenticate(@RequestBody RefreshRequest request,
+                                                     HttpServletRequest httpRequest)
             throws ParseException, JOSEException {
-        var result = authenticationService.refreshToken(request);
+        var result = authenticationService.refreshToken(request, httpRequest);
         return ApiResponse.<AuthenticationResponse>builder().result(result).build();
     }
 

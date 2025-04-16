@@ -42,6 +42,9 @@ public class User {
     LocalDateTime updatedAt;
     String role;
 
+    @Column(nullable = false)
+    private boolean active = false;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     Set<TripParticipant> trips = new HashSet<>();

@@ -29,17 +29,24 @@ public class UserService {
     UserRepository userRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    EmailService emailService;
 
     public UserResponse createUser(UserCreationRequest request) {
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
+        user.setActive(false);
         if (user.getRole() == null) {
             user.setRole("USER");
         }
         if (user.getProfileImages() == null)
             user.setProfileImages(new HashSet<>());
-        return userMapper.toUserResponse(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+
+        //Send verification email
+        emailService.sendVerificationEmail(savedUser);
+
+        return userMapper.toUserResponse(savedUser);
     }
 
     public UserResponse getMyInfo() {

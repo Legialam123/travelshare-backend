@@ -32,7 +32,10 @@ public enum ErrorCode {
     INVALID_SPLIT_TYPE(1021, "Invalid split type", HttpStatus.NOT_FOUND),
     INVALID_REQUEST(1022, "Invalid request", HttpStatus.NOT_FOUND),
     FILE_NOT_FOUND(1022, "File not found", HttpStatus.NOT_FOUND),
-    SETTLEMENT_NOT_FOUND(1023, "Settlement not found", HttpStatus.NOT_FOUND)
+    SETTLEMENT_NOT_FOUND(1023, "Settlement not found", HttpStatus.NOT_FOUND),
+    INVALID_TOKEN_TYPE(1024, "Invalid token type", HttpStatus.BAD_REQUEST),
+    UNAUTHORIZED_DEVICE(1023, "UNAUTHORIZED DEVICE", HttpStatus.NOT_FOUND),
+    USER_NOT_ACTIVE(1025, "Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email của bạn", HttpStatus.FORBIDDEN),
 
     ;
 
