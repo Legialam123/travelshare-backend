@@ -34,8 +34,10 @@ public enum ErrorCode {
     FILE_NOT_FOUND(1022, "File not found", HttpStatus.NOT_FOUND),
     SETTLEMENT_NOT_FOUND(1023, "Settlement not found", HttpStatus.NOT_FOUND),
     INVALID_TOKEN_TYPE(1024, "Invalid token type", HttpStatus.BAD_REQUEST),
-    UNAUTHORIZED_DEVICE(1023, "UNAUTHORIZED DEVICE", HttpStatus.NOT_FOUND),
-    USER_NOT_ACTIVE(1025, "Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email của bạn", HttpStatus.FORBIDDEN),
+    UNAUTHORIZED_DEVICE(1025, "UNAUTHORIZED DEVICE", HttpStatus.NOT_FOUND),
+    USER_NOT_ACTIVE(1026, "Email not active, pls check your email!", HttpStatus.FORBIDDEN),
+    TOKEN_USED(1027, "Your token used", HttpStatus.BAD_REQUEST),
+    TOKEN_EXPIRED(1027, "Your token expired", HttpStatus.BAD_REQUEST),
 
     ;
 

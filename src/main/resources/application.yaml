@@ -51,4 +51,5 @@ app:
   email:
     from: noreply@travelshare.com
     verification-base-url: http://localhost:8080/TravelShare/auth/verify-email
+    reset-password-base-url: http://localhost:8080/TravelShare/auth/reset-password
     verification-expiration: 24  #Hours
