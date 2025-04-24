@@ -3,10 +3,12 @@ package com.TravelShare.service;
 import com.TravelShare.dto.request.UserCreationRequest;
 import com.TravelShare.dto.request.UserUpdateRequest;
 import com.TravelShare.dto.response.UserResponse;
+import com.TravelShare.entity.Media;
 import com.TravelShare.entity.User;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.UserMapper;
+import com.TravelShare.repository.MediaRepository;
 import com.TravelShare.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class UserService {
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     EmailService emailService;
+    MediaRepository mediaRepository;
 
     public UserResponse createUser(UserCreationRequest request) {
         User user = userMapper.toUser(request);
@@ -54,7 +58,12 @@ public class UserService {
         String name = context.getAuthentication().getName();
         User user = userRepository.findByUsername(name)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        return userMapper.toUserResponse(user);
+        UserResponse response = userMapper.toUserResponse(user);
+        Optional<Media> avatarMedia = mediaRepository
+                .findFirstByUserIdAndDescriptionOrderByUploadedAtDesc(user.getId(), "avatar");
+        avatarMedia.ifPresent(media -> response.setAvatarUrl(media.getFileUrl()));
+
+        return response;
     }
 
     public UserResponse updateUser(String userId,UserUpdateRequest  request) {

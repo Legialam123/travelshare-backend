@@ -15,7 +15,7 @@ spring:
     password: ${DBMS_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
     properties:
       hibernate:
@@ -53,3 +53,10 @@ app:
     verification-base-url: http://localhost:8080/TravelShare/auth/verify-email
     reset-password-base-url: http://localhost:8080/TravelShare/auth/reset-password
     verification-expiration: 24  #Hours
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
+        type: TRACE

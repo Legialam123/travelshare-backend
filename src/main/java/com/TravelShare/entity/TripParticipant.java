@@ -28,7 +28,9 @@ public class TripParticipant {
     User user;
 
     // Fields for temporary users
+    @Column(nullable = false)
     String name;
+    
     String invitationToken;
     LocalDateTime invitedAt;
 

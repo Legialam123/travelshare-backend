@@ -1,6 +1,7 @@
 package com.TravelShare.dto.response;
 
 import com.TravelShare.entity.TripParticipant;
+import com.TravelShare.entity.User;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ public class TripParticipantResponse {
     Long id;
 
     String name;
-
+    UserSummaryResponse user;
     TripParticipant.InvitationStatus status;
 
     String role;

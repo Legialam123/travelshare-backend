@@ -1,6 +1,7 @@
 package com.TravelShare.mapper;
 
 import com.TravelShare.dto.request.ExpenseCreationRequest;
+import com.TravelShare.dto.request.ExpenseSplitCreationRequest;
 import com.TravelShare.dto.request.ExpenseUpdateRequest;
 import com.TravelShare.dto.response.ExpenseResponse;
 import com.TravelShare.entity.Expense;
@@ -18,6 +19,8 @@ public interface ExpenseMapper {
     @Mapping(target = "trip.createdBy", ignore = true)
     @Mapping(target = "trip.defaultCurrency", ignore = true)
     @Mapping(target = "payer", ignore = true)
+    @Mapping(target = "splits", ignore = true)
+    @Mapping(target = "attachments", ignore = true)
     Expense toExpense(ExpenseCreationRequest request);
 
     @Mapping(source = "trip.defaultCurrency.code", target = "trip.defaultCurrency")

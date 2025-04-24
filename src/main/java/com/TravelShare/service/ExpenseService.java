@@ -47,8 +47,15 @@ public class ExpenseService {
     }
 
     public List<ExpenseResponse> getAllExpenses() {
-        log.info("In method get Expense");
+        log.info("In method get Expenses");
         return expenseRepository.findAll()
+                .stream()
+                .map(expenseMapper::toExpenseResponse).toList();
+    }
+
+    public List<ExpenseResponse> getAllExpensesByTripId(Long tripId) {
+        log.info("In method get Expenses by trip");
+        return expenseRepository.findAllByTripId(tripId)
                 .stream()
                 .map(expenseMapper::toExpenseResponse).toList();
     }
@@ -69,9 +76,12 @@ public class ExpenseService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        // Create expense
         Expense expense = expenseMapper.toExpense(request);
-        // Validate and retrieve entities
+
+        if (expense.getSplits() == null) {
+            expense.setSplits(new HashSet<>());
+        }
+
         Currency currency;
         if (request.getCurrency() == null || request.getCurrency().isEmpty()) {
             // Use trip's default currency when not specified
@@ -88,31 +98,38 @@ public class ExpenseService {
         expense.setCreatedAt(LocalDateTime.now());
         expense.setCreatedBy(user);
 
-        // Handle attachments if any
-        if (request.getAttachmentIds() != null && !request.getAttachmentIds().isEmpty()) {
-            Set<Media> attachments = new HashSet<>();
-            for (Long mediaId : request.getAttachmentIds()) {
-                Media media = mediaRepository.findById(mediaId)
-                        .orElseThrow(() -> new AppException(ErrorCode.MEDIA_NOT_EXISTED));
-                media.setExpense(expense);
-                attachments.add(media);
-            }
-            expense.setAttachments(attachments);
-        }
-
         switch (request.getSplitType()) {
             case EQUAL:
+                log.info("Expense equal: ");
                 createEqualSplits(expense, trip);
                 break;
             case AMOUNT:
+                log.info("Expense amount: ");
                 createAmountSplits(expense, request.getSplits());
                 break;
             case PERCENTAGE:
+                log.info("Expense percentage: ");
                 createPercentageSplits(expense, request.getSplits());
                 break;
             default:
                 throw new AppException(ErrorCode.INVALID_SPLIT_TYPE);
         }
+
+        /*
+        if (expense.getSplits() != null) {
+            int index = 1;
+            for (ExpenseSplit split : expense.getSplits()) {
+                log.info("   🔸 Split #{} - participantId: {}, amount: {}, percentage: {}, isPayer: {}, expenseRef: {}",
+                        index++,
+                        split.getParticipant() != null ? split.getParticipant().getId() : "null",
+                        split.getAmount(),
+                        split.getPercentage(),
+                        split.isPayer(),
+                        split.getExpense() != null ? "✅" : "❌"
+                );
+            }
+        }*/
+
         expenseRepository.save(expense);
         return expenseMapper.toExpenseResponse(expense);
     }
@@ -126,6 +143,7 @@ public class ExpenseService {
                     .payer(isPayer)
                     .settlementStatus(ExpenseSplit.SettlementStatus.PENDING)
                     .build();
+
             if (splitRequest.getParticipantId() != null) {
                 TripParticipant participant = tripParticipantRepository
                         .findById(splitRequest.getParticipantId())

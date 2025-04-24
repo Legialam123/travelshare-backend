@@ -15,22 +15,25 @@ import java.math.BigDecimal;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SettlementCreationRequest {
     @NotNull
-    private Long tripId;
+    Long tripId;
 
     @NotNull
-    private Long fromParticipantId;
+    Long fromParticipantId;
 
     @NotNull
-    private Long toParticipantId;
+    Long toParticipantId;
 
     @NotNull
     @Digits(integer = 10, fraction = 2)
-    private BigDecimal amount;
+    BigDecimal amount;
 
     @NotNull
-    private String currencyCode;
+    String currencyCode;
 
-    private Settlement.SettlementMethod settlementMethod;
+    Settlement.SettlementMethod settlementMethod;
 
-    private String description;
+    String description;
+
+    Settlement.SettlementStatus status;
+
 }

@@ -1,5 +1,6 @@
 package com.TravelShare.dto.response;
 
+import com.TravelShare.entity.User;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -14,5 +15,13 @@ public class UserSummaryResponse {
     String id;
     String fullName;
     LocalDate dob;
+    String email;
     String role;
+    public static UserSummaryResponse from(User user) {
+        return UserSummaryResponse.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .build();
+    }
 }

@@ -5,7 +5,9 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -47,12 +49,10 @@ public class Expense {
     ExpenseCategory category;
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    Set<Media> attachments = new HashSet<>();
+    Set<Media> attachments;
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    Set<ExpenseSplit> splits = new HashSet<>();
+    Set<ExpenseSplit> splits;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -60,6 +60,9 @@ public class Expense {
 
     @Column(nullable = false)
     LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    LocalDate expenseDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id", nullable = false)

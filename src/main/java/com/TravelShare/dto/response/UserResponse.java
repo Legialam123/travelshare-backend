@@ -21,5 +21,6 @@ public class UserResponse {
     LocalDate dob;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
+    String avatarUrl;
     String role;
 }

@@ -8,6 +8,9 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
 
@@ -33,14 +36,13 @@ public class ExpenseCreationRequest {
     @NotNull(message = "Category is required")
     Long category;
 
-    List<Long> attachmentIds;
+    LocalDate expenseDate;
 
     Long participantId;
 
     @NotNull(message = "Split type is required")
     Expense.SplitType splitType = Expense.SplitType.EQUAL;
 
-    // For non-equal splits, specify which users and their portions
     Set<ExpenseSplitCreationRequest> splits;
 
 }

@@ -29,6 +29,9 @@ public class Trip {
 
     LocalDateTime createdAt;
 
+    @Column(unique = true, nullable = false)
+    String joinCode;
+
     Double budgetLimit;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,6 +46,7 @@ public class Trip {
     @Builder.Default
     Set<Media> tripImages = new HashSet<>();
 
+    /*
     public void addParticipant(User user, String role, TripParticipant.InvitationStatus status) {
         TripParticipant participant = TripParticipant.builder()
                 .trip(this)
@@ -61,4 +65,5 @@ public class Trip {
         participants.removeIf(participant -> participant.getUser().equals(user));
         user.getTrips().removeIf(participant -> participant.getTrip().equals(this));
     }
+    */
 }

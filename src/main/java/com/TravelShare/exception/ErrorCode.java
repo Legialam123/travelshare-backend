@@ -12,7 +12,7 @@ public enum ErrorCode {
     USER_EXISTED(1002, "User existed", HttpStatus.BAD_REQUEST),
     USERNAME_INVALID(1003, "Username must be at least {min} characters", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD(1004, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
-    USER_NOT_EXISTED(1005, "User not existed", HttpStatus.NOT_FOUND),
+    USER_NOT_EXISTED(1005, "Người dùng không tồn tại", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN),
     INVALID_DOB(1008, "Your age must be at least {min}", HttpStatus.BAD_REQUEST),
@@ -37,8 +37,12 @@ public enum ErrorCode {
     UNAUTHORIZED_DEVICE(1025, "UNAUTHORIZED DEVICE", HttpStatus.NOT_FOUND),
     USER_NOT_ACTIVE(1026, "Email not active, pls check your email!", HttpStatus.FORBIDDEN),
     TOKEN_USED(1027, "Your token used", HttpStatus.BAD_REQUEST),
-    TOKEN_EXPIRED(1027, "Your token expired", HttpStatus.BAD_REQUEST),
-
+    TOKEN_EXPIRED(1028, "Your token expired", HttpStatus.BAD_REQUEST),
+    PARTICIPANT_ALREADY_LINKED(1029, "This participant already linked", HttpStatus.BAD_REQUEST),
+    USER_ALREADY_IN_TRIP(1030, "This user already in trip", HttpStatus.BAD_REQUEST),
+    CANNOT_LEAVE_TRIP_AS_LAST_ADMIN(1031, "Your is last admin in Trip, can't leave", HttpStatus.BAD_REQUEST),
+    CANNOT_REMOVE_LAST_ADMIN(1032, "Your is last admin in Trip, can't update role", HttpStatus.BAD_REQUEST),
+    EMAIL_NOT_EXISTED(1032, "Email không tồn tại trong hệ thống !!!", HttpStatus.NOT_FOUND),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

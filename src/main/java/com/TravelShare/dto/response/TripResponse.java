@@ -17,5 +17,7 @@ public class TripResponse {
     LocalDateTime createdAt;
     Double budgetLimit;
     String defaultCurrency;
+    String joinCode;
+    List<MediaResponse> tripImages;
     List<TripParticipantResponse> participants;
 }

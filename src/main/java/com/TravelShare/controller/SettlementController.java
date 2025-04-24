@@ -1,23 +1,30 @@
 package com.TravelShare.controller;
 
 import com.TravelShare.dto.request.SettlementCreationRequest;
+import com.TravelShare.dto.request.SettlementUpdateRequest;
 import com.TravelShare.dto.response.ApiResponse;
 import com.TravelShare.dto.response.BalanceResponse;
 import com.TravelShare.dto.response.SettlementResponse;
 import com.TravelShare.entity.Settlement;
 import com.TravelShare.entity.Trip;
+import com.TravelShare.entity.User;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.repository.TripRepository;
+import com.TravelShare.repository.UserRepository;
 import com.TravelShare.service.SettlementService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.nio.file.attribute.UserPrincipal;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -44,9 +51,20 @@ public class SettlementController {
     }
 
     @GetMapping("/trip/{tripId}/suggested")
-    public ApiResponse<List<SettlementResponse>> getSuggestedSettlements(@PathVariable Long tripId) {
+    public ApiResponse<List<SettlementResponse>> getSuggestedSettlements(@PathVariable Long tripId, @RequestParam(name = "userOnly", required = false, defaultValue = "false") boolean userOnly,  HttpServletRequest request) {
+        Principal principal = request.getUserPrincipal();
+        List<SettlementResponse> suggestions;
+
+        if (userOnly) {
+            // Lấy username từ token (sub)
+            String username = principal.getName();
+
+            suggestions = settlementService.suggestSettlements(tripId, username);
+        } else {
+            suggestions = settlementService.suggestSettlements(tripId);
+        }
         return ApiResponse.<List<SettlementResponse>>builder()
-                .result(settlementService.suggestSettlements(tripId))
+                .result(suggestions)
                 .build();
     }
 
@@ -62,9 +80,9 @@ public class SettlementController {
     @PatchMapping("/{settlementId}/confirm")
     public ApiResponse<SettlementResponse> updateSettlementStatus(
             @PathVariable Long settlementId,
-            @RequestBody Settlement.SettlementStatus status) {
+            @RequestBody SettlementUpdateRequest request) {
         return ApiResponse.<SettlementResponse>builder()
-                .result(settlementService.updateSettlementStatus(settlementId, status))
+                .result(settlementService.updateSettlementStatus(settlementId, request))
                 .build();
     }
 

@@ -90,6 +90,14 @@ public class MediaController {
     }
 
 
+    @GetMapping("/userupload/{userId}")
+    public ApiResponse<List<MediaResponse>> getUploadUserMedia(@PathVariable String userId) {
+        return ApiResponse.<List<MediaResponse>>builder()
+                .result(mediaService.getUserUploads(userId))
+                .build();
+    }
+
+
     @DeleteMapping("/{id}")
     ApiResponse<String> deleteMedia(@PathVariable Long id) {
         mediaService.deleteMedia(id);

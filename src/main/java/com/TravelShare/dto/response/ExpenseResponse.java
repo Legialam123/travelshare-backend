@@ -4,6 +4,7 @@ import com.TravelShare.entity.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class ExpenseResponse {
     List<ExpenseSplitResponse> splits;
 
     Expense.SplitType splitType;
-
+    LocalDate expenseDate;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 

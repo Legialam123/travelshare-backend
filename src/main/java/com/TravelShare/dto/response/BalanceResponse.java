@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BalanceResponse {
+    private String participantUserId;
     private Long participantId;
     private String participantName;
     private BigDecimal balance;

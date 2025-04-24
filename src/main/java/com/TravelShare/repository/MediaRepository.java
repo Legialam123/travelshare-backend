@@ -30,4 +30,6 @@ public interface MediaRepository extends JpaRepository<Media,Long>{
     List<Media> findByExpenseSplitId(Long expenseSplitId);
     List<Media> findByUserId(String userId);
     Optional<Media>  findByFileName(String fileName);
+    Optional<Media> findFirstByTripIdAndMediaTypeAndDescription(Long tripId, Media.MediaType mediaType, String description);
+    Optional<Media> findFirstByUserIdAndDescriptionOrderByUploadedAtDesc(String userId, String description);
 }

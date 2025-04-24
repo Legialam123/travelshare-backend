@@ -22,7 +22,7 @@ public class ExpenseSplit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "expense_id", nullable = false)
     Expense expense;
 

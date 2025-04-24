@@ -46,8 +46,33 @@ public class DatabaseInitializer implements CommandLineRunner {
         initAdminAccount();
         initCurrencies();
         initExpenseCategories();
+        initRegularUsers();
+    }
+    private void initRegularUsers() {
+        createUserIfNotExists("lam123", "123456", "lam@example.com", "Lam Le");
+        createUserIfNotExists("liem456", "123456", "liem@example.com", "Liem Le");
     }
 
+    private void createUserIfNotExists(String username, String rawPassword, String email, String fullName) {
+        if (userRepository.findByUsername(username).isEmpty()) {
+            log.info("Creating user account: {}", username);
+            User user = User.builder()
+                    .username(username)
+                    .password(passwordEncoder.encode(rawPassword))
+                    .email(email)
+                    .fullName(fullName)
+                    .role("USER")
+                    .createdAt(LocalDateTime.now())
+                    .trips(new HashSet<>())
+                    .profileImages(new HashSet<>())
+                    .active(true)
+                    .build();
+            userRepository.save(user);
+            log.info("User account {} created successfully", username);
+        } else {
+            log.info("User account {} already exists", username);
+        }
+    }
     private void initAdminAccount() {
         if (userRepository.findByUsername(adminUsername).isEmpty()) {
             log.info("Creating admin account");
@@ -60,6 +85,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                     .createdAt(LocalDateTime.now())
                     .trips(new HashSet<>())
                     .profileImages(new HashSet<>())
+                    .active(true)
                     .build();
             userRepository.save(admin);
             log.info("Admin account created successfully");

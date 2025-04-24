@@ -32,6 +32,13 @@ public class ExpenseController {
                 .result(expenseService.getAllExpenses())
                 .build();
     }
+    @GetMapping("/trip/{tripId}")
+    public ApiResponse<List<ExpenseResponse>> getAllExpensesByTripId(@PathVariable Long tripId) {
+        log.info("Getting all expenses for trip with id: {}", tripId);
+        return ApiResponse.<List<ExpenseResponse>>builder()
+                .result(expenseService.getAllExpensesByTripId(tripId))
+                .build();
+    }
 
     @GetMapping("/{expenseId}")
     public ApiResponse<ExpenseResponse> getExpense(@PathVariable Long expenseId) {

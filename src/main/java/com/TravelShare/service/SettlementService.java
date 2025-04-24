@@ -1,6 +1,7 @@
 package com.TravelShare.service;
 
 import com.TravelShare.dto.request.SettlementCreationRequest;
+import com.TravelShare.dto.request.SettlementUpdateRequest;
 import com.TravelShare.dto.response.BalanceResponse;
 import com.TravelShare.dto.response.ExpenseResponse;
 import com.TravelShare.dto.response.SettlementResponse;
@@ -36,8 +37,13 @@ public class SettlementService {
     CurrencyRepository currencyRepository;
     ExpenseSplitRepository expenseSplitRepository;
     ExpenseRepository expenseRepository;
+    UserRepository    userRepository;
 
     public List<SettlementResponse> suggestSettlements(Long tripId) {
+        return suggestSettlements(tripId, null); // Gọi lại hàm chính với username = null
+    }
+
+    public List<SettlementResponse> suggestSettlements(Long tripId, String username) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new AppException(ErrorCode.TRIP_NOT_EXISTED));
 
@@ -93,6 +99,21 @@ public class SettlementService {
             if (debtors.get(i).getValue().abs().compareTo(new BigDecimal("0.01")) < 0) i++;
             if (creditors.get(j).getValue().compareTo(new BigDecimal("0.01")) < 0) j++;
         }
+        if (username != null) {
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+            // Tìm participant của user theo email
+            TripParticipant currentParticipant = participantRepository.findByTripIdAndUserId(tripId, user.getId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
+
+            Long userParticipantId = currentParticipant.getId();
+
+            suggestions = suggestions.stream()
+                    .filter(s -> s.getFromParticipantId().equals(userParticipantId)
+                            || s.getToParticipantId().equals(userParticipantId))
+                    .collect(Collectors.toList());
+        }
 
         return suggestions;
     }
@@ -127,26 +148,46 @@ public class SettlementService {
                     balances.put(participantId, balances.get(participantId).subtract(amount));
             }
         }
+        List<Settlement> settlements = settlementRepository.findByTripIdAndStatus(trip.getId(), Settlement.SettlementStatus.COMPLETED);
+
+        for (Settlement s : settlements) {
+            Long fromId = s.getFromParticipant().getId();
+            Long toId = s.getToParticipant().getId();
+            BigDecimal amount = s.getAmount();
+
+            // Người trả đã trả tiền → cộng lại vào số dư
+            balances.put(fromId, balances.get(fromId).add(amount));
+
+            // Người nhận đã nhận tiền → trừ khỏi số dư
+            balances.put(toId, balances.get(toId).subtract(amount));
+        }
         return balances;
     }
+
     public List<BalanceResponse> convertToBalanceResponse(Trip trip, Map<Long, BigDecimal> balances) {
-        return trip.getParticipants().stream().map(participant ->
-                BalanceResponse.builder()
-                        .participantId(participant.getId())
-                        .participantName(participant.getName())
-                        .balance(balances.getOrDefault(participant.getId(), BigDecimal.ZERO))
-                        .currencyCode(trip.getDefaultCurrency().getCode())
-                        .build()
-        ).collect(Collectors.toList());
+        return trip.getParticipants().stream().map(participant -> {
+            String participantUserId = null;
+            if (participant.getUser() != null) {
+                participantUserId = participant.getUser().getId();
+            }
+
+            return BalanceResponse.builder()
+                    .participantUserId(participantUserId)
+                    .participantId(participant.getId())
+                    .participantName(participant.getName())
+                    .balance(balances.getOrDefault(participant.getId(), BigDecimal.ZERO))
+                    .currencyCode(trip.getDefaultCurrency().getCode())
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     @Transactional
-    public SettlementResponse updateSettlementStatus(Long settlementId, Settlement.SettlementStatus status) {
+    public SettlementResponse updateSettlementStatus(Long settlementId, SettlementUpdateRequest request) {
         Settlement settlement = settlementRepository.findById(settlementId)
                 .orElseThrow(() -> new AppException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
-        settlement.setStatus(status);
-        if (status == Settlement.SettlementStatus.COMPLETED) {
+        settlement.setStatus(request.getStatus());
+        if (request.getStatus() == Settlement.SettlementStatus.COMPLETED) {
             settlement.setSettledAt(LocalDateTime.now());
         }
 
@@ -181,7 +222,7 @@ public class SettlementService {
                 .currency(currency)
                 .settlementMethod(request.getSettlementMethod())
                 .description(request.getDescription())
-                .status(Settlement.SettlementStatus.PENDING)
+                .status(request.getStatus())
                 .createdAt(LocalDateTime.now())
                 .build();
 
