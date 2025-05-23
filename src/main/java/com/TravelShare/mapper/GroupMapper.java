@@ -1,34 +1,34 @@
 package com.TravelShare.mapper;
 
-import com.TravelShare.dto.request.TripCreationRequest;
-import com.TravelShare.dto.request.TripUpdateRequest;
-import com.TravelShare.dto.response.TripResponse;
-import com.TravelShare.dto.response.TripSummaryResponse;
-import com.TravelShare.entity.Trip;
+import com.TravelShare.dto.request.GroupCreationRequest;
+import com.TravelShare.dto.request.GroupUpdateRequest;
+import com.TravelShare.dto.response.GroupResponse;
+import com.TravelShare.dto.response.GroupSummaryResponse;
+import com.TravelShare.entity.Group;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
-public interface TripMapper {
+public interface GroupMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "defaultCurrency", ignore = true)
     @Mapping(target = "participants", ignore = true)
-    Trip toTrip(TripCreationRequest request);
+    Group toGroup(GroupCreationRequest request);
 
     @Mapping(target = "defaultCurrency", source = "defaultCurrency.code")
-    TripResponse toTripResponse(Trip trip);
+    GroupResponse toGroupResponse(Group group);
 
     @Mapping(target = "defaultCurrency", source = "defaultCurrency.code")
-    TripSummaryResponse toTripSummaryResponse(Trip trip);
+    GroupSummaryResponse toGroupSummaryResponse(Group group);
 
     @Mapping(target = "defaultCurrency", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "participants", ignore = true)
     @Mapping(target = "id", ignore = true)
-    void updateTrip(@MappingTarget Trip trip, TripUpdateRequest request);
+    void updateGroup(@MappingTarget Group group, GroupUpdateRequest request);
 
 }

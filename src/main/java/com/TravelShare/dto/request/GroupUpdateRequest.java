@@ -8,7 +8,8 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ExpenseCategoryCreationRequest {
+public class GroupUpdateRequest {
     String name;
-    String description;
+    Double budgetLimit;
+    String defaultCurrencyCode;
 }

@@ -18,7 +18,7 @@ import java.text.ParseException;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class AuthenticationController {
+public class    AuthenticationController {
     AuthenticationService authenticationService;
 
     @PostMapping("/login")

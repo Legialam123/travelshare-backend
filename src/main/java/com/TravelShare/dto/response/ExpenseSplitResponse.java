@@ -14,7 +14,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ExpenseSplitResponse {
     Long id;
-    TripParticipantResponse participant;
+    GroupParticipantResponse participant;
     BigDecimal amount;
     List<MediaResponse> proofImages;
     ExpenseSplit.SettlementStatus settlementStatus;

@@ -29,10 +29,11 @@ public class ExpenseCreationRequest {
     @Positive(message = "Amount must be positive")
     BigDecimal amount;
 
-    @NotNull(message = "Trip ID is required")
-    Long tripId;
+    @NotNull(message = "Group ID is required")
+    Long groupId;
 
     String currency;
+
     @NotNull(message = "Category is required")
     Long category;
 

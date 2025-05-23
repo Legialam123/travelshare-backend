@@ -31,7 +31,7 @@ public class ExpenseUpdateRequest {
     @NotNull(message = "Category is required")
     Long category;
 
-    String payerId;
+    Long participantId;
 
     List<Long> attachmentIds;
 

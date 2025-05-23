@@ -2,17 +2,16 @@ package com.TravelShare.service;
 
 import com.TravelShare.dto.response.MediaResponse;
 import com.TravelShare.entity.Expense;
+import com.TravelShare.entity.Group;
 import com.TravelShare.entity.Media;
-import com.TravelShare.entity.Trip;
 import com.TravelShare.entity.User;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.MediaMapper;
 import com.TravelShare.repository.ExpenseRepository;
+import com.TravelShare.repository.GroupRepository;
 import com.TravelShare.repository.MediaRepository;
-import com.TravelShare.repository.TripRepository;
 import com.TravelShare.repository.UserRepository;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -25,12 +24,9 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import javax.xml.transform.Source;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,7 +44,7 @@ public class MediaService {
     final MediaRepository mediaRepository;
     final UserRepository userRepository;
     final MediaMapper mediaMapper;
-    final TripRepository tripRepository;
+    final GroupRepository groupRepository;
     final ExpenseRepository expenseRepository;
 
 
@@ -106,13 +102,13 @@ public class MediaService {
         }
     }
     @Transactional
-    public MediaResponse uploadTripMedia (MultipartFile file, Long tripId, String description){
+    public MediaResponse uploadGroupMedia (MultipartFile file, Long groupId, String description){
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             User currentUser = userRepository.findByUsername(username)
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-            Trip trip = tripRepository.findById(tripId)
-                    .orElseThrow(() -> new AppException(ErrorCode.TRIP_NOT_EXISTED));
+            Group group = groupRepository.findById(groupId)
+                    .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));
             Path uploadPath = Paths.get(storageDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
@@ -135,7 +131,7 @@ public class MediaService {
                     .contentType(file.getContentType())
                     .mediaType(mediaType)
                     .fileSize(file.getSize())
-                    .trip(trip)
+                    .group(group)
                     .filePath(filePath.toString())
                     .fileUrl(urlPrefix + uniqueFilename)
                     .description(description)
@@ -159,7 +155,7 @@ public class MediaService {
             User currentUser = userRepository.findByUsername(username)
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
             Expense expense = expenseRepository.findById(expenseId)
-                    .orElseThrow(() -> new AppException(ErrorCode.TRIP_NOT_EXISTED));
+                    .orElseThrow(() -> new AppException(ErrorCode.EXPENSE_NOT_EXISTED));
             Path uploadPath = Paths.get(storageDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
@@ -253,8 +249,8 @@ public class MediaService {
 
 
     @Transactional(readOnly = true)
-    public List<MediaResponse> getTripMedia (Long tripId){
-        return mediaRepository.findByTripId(tripId).stream()
+    public List<MediaResponse> getGroupMedia (Long groupId){
+        return mediaRepository.findByGroupId(groupId).stream()
                 .map(mediaMapper::toMediaResponse)
                 .toList();
     }

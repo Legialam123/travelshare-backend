@@ -16,12 +16,14 @@ public class UserSummaryResponse {
     String fullName;
     LocalDate dob;
     String email;
+    String phoneNumber;
     String role;
     public static UserSummaryResponse from(User user) {
         return UserSummaryResponse.builder()
                 .id(user.getId())
                 .fullName(user.getFullName())
                 .email(user.getEmail())
+                .phoneNumber(user.getPhoneNumber())
                 .build();
     }
 }

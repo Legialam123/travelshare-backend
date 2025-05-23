@@ -5,13 +5,10 @@ import com.TravelShare.dto.request.SettlementUpdateRequest;
 import com.TravelShare.dto.response.ApiResponse;
 import com.TravelShare.dto.response.BalanceResponse;
 import com.TravelShare.dto.response.SettlementResponse;
-import com.TravelShare.entity.Settlement;
-import com.TravelShare.entity.Trip;
-import com.TravelShare.entity.User;
+import com.TravelShare.entity.Group;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
-import com.TravelShare.repository.TripRepository;
-import com.TravelShare.repository.UserRepository;
+import com.TravelShare.repository.GroupRepository;
 import com.TravelShare.service.SettlementService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -19,11 +16,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.nio.file.attribute.UserPrincipal;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
@@ -36,22 +31,22 @@ import java.util.Map;
 public class SettlementController {
 
     SettlementService settlementService;
-    TripRepository tripRepository;
+    GroupRepository groupRepository;
 
-    @GetMapping("/trip/{tripId}/balances")
-    public ApiResponse<List<BalanceResponse>> getTripBalances(@PathVariable Long tripId) {
-        Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new AppException(ErrorCode.TRIP_NOT_EXISTED));
+    @GetMapping("/group/{groupId}/balances")
+    public ApiResponse<List<BalanceResponse>> getTripBalances(@PathVariable Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));
 
-        Map<Long, BigDecimal> balances = settlementService.calculateBalances(trip);
+        Map<Long, BigDecimal> balances = settlementService.calculateBalances(group);
 
         return ApiResponse.<List<BalanceResponse>>builder()
-                .result(settlementService.convertToBalanceResponse(trip, balances))
+                .result(settlementService.convertToBalanceResponse(group, balances))
                 .build();
     }
 
-    @GetMapping("/trip/{tripId}/suggested")
-    public ApiResponse<List<SettlementResponse>> getSuggestedSettlements(@PathVariable Long tripId, @RequestParam(name = "userOnly", required = false, defaultValue = "false") boolean userOnly,  HttpServletRequest request) {
+    @GetMapping("/group/{groupId}/suggested")
+    public ApiResponse<List<SettlementResponse>> getSuggestedSettlements(@PathVariable Long groupId, @RequestParam(name = "userOnly", required = false, defaultValue = "false") boolean userOnly,  HttpServletRequest request) {
         Principal principal = request.getUserPrincipal();
         List<SettlementResponse> suggestions;
 
@@ -59,9 +54,9 @@ public class SettlementController {
             // Lấy username từ token (sub)
             String username = principal.getName();
 
-            suggestions = settlementService.suggestSettlements(tripId, username);
+            suggestions = settlementService.suggestSettlements(groupId, username);
         } else {
-            suggestions = settlementService.suggestSettlements(tripId);
+            suggestions = settlementService.suggestSettlements(groupId);
         }
         return ApiResponse.<List<SettlementResponse>>builder()
                 .result(suggestions)
@@ -86,10 +81,10 @@ public class SettlementController {
                 .build();
     }
 
-    @GetMapping("/trip/{tripId}")
-    public ApiResponse<List<SettlementResponse>> getTripSettlements(@PathVariable Long tripId) {
+    @GetMapping("/group/{groupId}")
+    public ApiResponse<List<SettlementResponse>> getGroupSettlements(@PathVariable Long groupId) {
         return ApiResponse.<List<SettlementResponse>>builder()
-                .result(settlementService.getTripSettlements(tripId))
+                .result(settlementService.getGroupSettlements(groupId))
                 .build();
     }
 }

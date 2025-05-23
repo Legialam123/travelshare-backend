@@ -50,9 +50,10 @@ public class Media {
 
     // Optional relationships based on where the media is used
 
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trip_id")
-    Trip trip;
+    @JoinColumn(name = "group_id")
+    Group group;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "expense_split_id")

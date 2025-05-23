@@ -3,8 +3,6 @@ package com.TravelShare.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.springframework.boot.autoconfigure.web.WebProperties;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -43,11 +41,12 @@ public class User {
     String role;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = false;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    Set<TripParticipant> trips = new HashSet<>();
+    Set<GroupParticipant> groups = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

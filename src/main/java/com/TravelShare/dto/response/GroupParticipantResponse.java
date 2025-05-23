@@ -1,7 +1,6 @@
 package com.TravelShare.dto.response;
 
-import com.TravelShare.entity.TripParticipant;
-import com.TravelShare.entity.User;
+import com.TravelShare.entity.GroupParticipant;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
@@ -11,12 +10,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class TripParticipantResponse {
+public class GroupParticipantResponse {
     Long id;
 
     String name;
     UserSummaryResponse user;
-    TripParticipant.InvitationStatus status;
+    GroupParticipant.InvitationStatus status;
 
     String role;
     LocalDateTime joinedAt;

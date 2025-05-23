@@ -1,4 +1,4 @@
-package com.TravelShare.dto.response;
+package com.TravelShare.dto.request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -8,8 +8,9 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ExpenseCategoryResponse {
-    Long id;
+public class CategoryUpdateRequest {
     String name;
     String description;
+    String iconCode;
+    String color;
 }

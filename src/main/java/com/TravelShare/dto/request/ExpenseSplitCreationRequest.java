@@ -16,5 +16,4 @@ public class ExpenseSplitCreationRequest {
     BigDecimal amount;
     BigDecimal percentage;
     Integer shares;
-    List<Long> proofImageIds;
 }

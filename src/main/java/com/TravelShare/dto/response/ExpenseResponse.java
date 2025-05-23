@@ -24,11 +24,11 @@ public class ExpenseResponse {
 
     CurrencyResponse currency;
 
-    TripSummaryResponse trip;
+    GroupSummaryResponse group;
 
-    TripParticipantResponse payer;
+    GroupParticipantResponse payer;
 
-    ExpenseCategoryResponse category;
+    CategoryResponse category;
 
     List<MediaResponse> attachments;
 

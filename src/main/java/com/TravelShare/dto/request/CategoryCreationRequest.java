@@ -1,5 +1,7 @@
 package com.TravelShare.dto.request;
 
+import com.TravelShare.entity.Category;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -8,7 +10,11 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class TripInvitationRequest {
+public class CategoryCreationRequest {
     String name;
-    String role;
+    String description;
+    Long groupId;
+    String iconCode;
+    String color;
+    Category.CategoryType type;
 }

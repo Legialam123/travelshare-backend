@@ -15,8 +15,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserUpdateRequest {
-    @Size(min = 8, message = "INVALID_PASSWORD")
-    String password;
+    String oldPassword;
+    @Size(min = 6, message = "INVALID_PASSWORD")
+    String newPassword;
     String email;
     String fullName;
     @Size(min = 10, message = "INVALID_PHONE_NUMBER")

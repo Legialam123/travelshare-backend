@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SettlementCreationRequest {
     @NotNull
-    Long tripId;
+    Long groupId;
 
     @NotNull
     Long fromParticipantId;

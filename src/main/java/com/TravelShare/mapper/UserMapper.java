@@ -12,7 +12,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "trips", ignore = true)
+    @Mapping(target = "groups", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     User toUser(UserCreationRequest request);
 
@@ -21,8 +21,18 @@ public interface UserMapper {
     UserSummaryResponse toUserSummaryResponse(User user);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "trips", ignore = true)
+    @Mapping(target = "groups", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "username", ignore = true)
-    void updateUser(@MappingTarget User user, UserUpdateRequest request);
+    default void updateUser(@MappingTarget User user, UserUpdateRequest request) {
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getPhoneNumber() != null) {
+            user.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getDob() != null) {
+            user.setDob(request.getDob());
+        }
+    }
 }

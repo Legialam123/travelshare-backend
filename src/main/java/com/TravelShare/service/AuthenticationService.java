@@ -4,13 +4,11 @@ import com.TravelShare.dto.request.*;
 import com.TravelShare.dto.response.AuthenticationResponse;
 import com.TravelShare.dto.response.IntrospectResponse;
 import com.TravelShare.entity.InvalidatedToken;
-import com.TravelShare.entity.PasswordResetToken;
 import com.TravelShare.entity.RefreshToken;
 import com.TravelShare.entity.User;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.repository.InvalidatedTokenRepository;
-import com.TravelShare.repository.PasswordResetTokenRepository;
 import com.TravelShare.repository.RefreshTokenRepository;
 import com.TravelShare.repository.UserRepository;
 import com.nimbusds.jose.*;
@@ -26,14 +24,12 @@ import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.UUID;
@@ -46,7 +42,6 @@ public class AuthenticationService {
     UserRepository userRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
     RefreshTokenRepository refreshTokenRepository;
-    PasswordResetTokenRepository passwordResetTokenRepository;
     @NonFinal
     @Value("${jwt.signerKey}")
     protected String SIGNER_KEY;

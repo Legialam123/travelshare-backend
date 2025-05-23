@@ -1,23 +1,24 @@
-package com.TravelShare.dto.response;
+package com.TravelShare.dto.request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class TripResponse {
-    Long id;
+public class GroupCreationRequest {
     String name;
-    UserSummaryResponse createdBy;
+    String createdBy;
     LocalDateTime createdAt;
     Double budgetLimit;
     String defaultCurrency;
-    String joinCode;
-    List<MediaResponse> tripImages;
-    List<TripParticipantResponse> participants;
+    Long categoryId;
+
+    // Thêm danh sách participants dự kiến
+    Set<GroupInvitationRequest> participants;
 }

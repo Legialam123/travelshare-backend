@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class SettlementResponse {
          Long id;
 
-         Long tripId;
+         Long groupId;
 
          Long fromParticipantId;
          String fromParticipantName;

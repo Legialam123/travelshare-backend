@@ -6,7 +6,6 @@ import com.TravelShare.service.MediaService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -35,12 +31,12 @@ public class MediaController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PostMapping(value = "/trip/{tripId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<MediaResponse> uploadTripMedia(
+    @PostMapping(value = "/group/{groupId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MediaResponse> uploadGroupMedia(
             @RequestParam("file") MultipartFile file,
-            @PathVariable Long tripId,
+            @PathVariable Long groupId,
             @RequestParam(value = "description", required = false) String description) {
-        MediaResponse response = mediaService.uploadTripMedia(file, tripId, description);
+        MediaResponse response = mediaService.uploadGroupMedia(file, groupId, description);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -68,10 +64,10 @@ public class MediaController {
         return ResponseEntity.ok(mediaService.getMedia(id));
     }
 
-    @GetMapping("/trip/{tripId}")
-    public ApiResponse<List<MediaResponse>> getTripMedia(@PathVariable Long tripId) {
+    @GetMapping("/group/{groupId}")
+    public ApiResponse<List<MediaResponse>> getGroupMedia(@PathVariable Long groupId) {
         return ApiResponse.<List<MediaResponse>>builder()
-                .result(mediaService.getTripMedia(tripId))
+                .result(mediaService.getGroupMedia(groupId))
                 .build();
     }
 

@@ -7,8 +7,6 @@ import lombok.experimental.FieldDefaults;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.Set;
 
 @Getter
@@ -37,16 +35,16 @@ public class Expense {
     Currency currency;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trip_id", nullable = false)
-    Trip trip;
+    @JoinColumn(name = "group_id", nullable = false)
+    Group group;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payer_id", nullable = false)
-    TripParticipant payer;
+    GroupParticipant payer;
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
-    ExpenseCategory category;
+    Category category;
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true)
     Set<Media> attachments;

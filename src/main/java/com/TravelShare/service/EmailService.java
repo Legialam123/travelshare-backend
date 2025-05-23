@@ -92,7 +92,6 @@ public class EmailService {
         }
     }
 
-    @Async
     public void sendResetPasswordLink(ForgotPasswordRequest request) {
         User user = userRepository.findByUsernameOrEmail(request.getIdentifier(), request.getIdentifier())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));

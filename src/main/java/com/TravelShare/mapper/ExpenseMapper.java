@@ -1,7 +1,6 @@
 package com.TravelShare.mapper;
 
 import com.TravelShare.dto.request.ExpenseCreationRequest;
-import com.TravelShare.dto.request.ExpenseSplitCreationRequest;
 import com.TravelShare.dto.request.ExpenseUpdateRequest;
 import com.TravelShare.dto.response.ExpenseResponse;
 import com.TravelShare.entity.Expense;
@@ -16,14 +15,14 @@ import java.math.BigDecimal;
 public interface ExpenseMapper {
     @Mapping(target = "currency", ignore = true)
     @Mapping(target = "category", ignore = true)
-    @Mapping(target = "trip.createdBy", ignore = true)
-    @Mapping(target = "trip.defaultCurrency", ignore = true)
+    @Mapping(target = "group.createdBy", ignore = true)
+    @Mapping(target = "group.defaultCurrency", ignore = true)
     @Mapping(target = "payer", ignore = true)
     @Mapping(target = "splits", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     Expense toExpense(ExpenseCreationRequest request);
 
-    @Mapping(source = "trip.defaultCurrency.code", target = "trip.defaultCurrency")
+    @Mapping(source = "group.defaultCurrency.code", target = "group.defaultCurrency")
     @Mapping(expression = "java(calculateTotalSettled(expense))", target = "totalSettled")
     @Mapping(expression = "java(calculateTotalPending(expense))", target = "totalPending")
     @Mapping(expression = "java(expense.getSplits().size())", target = "participantCount")

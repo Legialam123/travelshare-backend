@@ -3,8 +3,6 @@ package com.TravelShare.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.springframework.cglib.core.Local;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -23,16 +21,16 @@ public class Settlement {
     Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trip_id", nullable = false)
-    Trip trip;
+    @JoinColumn(name = "group_id", nullable = false)
+    Group group;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "from_participant_id", nullable = false)
-    TripParticipant fromParticipant;
+    GroupParticipant fromParticipant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "to_participant_id", nullable = false)
-    TripParticipant toParticipant;
+    GroupParticipant toParticipant;
 
     @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal amount;
@@ -64,6 +62,7 @@ public class Settlement {
     }
 
     @OneToMany(mappedBy = "settlement", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     Set<Media> proofImages = new HashSet<>();
 
     @PrePersist

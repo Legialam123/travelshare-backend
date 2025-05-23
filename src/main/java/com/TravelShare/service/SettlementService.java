@@ -3,7 +3,6 @@ package com.TravelShare.service;
 import com.TravelShare.dto.request.SettlementCreationRequest;
 import com.TravelShare.dto.request.SettlementUpdateRequest;
 import com.TravelShare.dto.response.BalanceResponse;
-import com.TravelShare.dto.response.ExpenseResponse;
 import com.TravelShare.dto.response.SettlementResponse;
 import com.TravelShare.entity.*;
 import com.TravelShare.exception.AppException;
@@ -32,10 +31,9 @@ import java.util.stream.Collectors;
 public class SettlementService {
     SettlementMapper settlementMapper;
     SettlementRepository settlementRepository;
-    TripRepository tripRepository;
-    TripParticipantRepository participantRepository;
+    GroupRepository groupRepository;
+    GroupParticipantRepository participantRepository;
     CurrencyRepository currencyRepository;
-    ExpenseSplitRepository expenseSplitRepository;
     ExpenseRepository expenseRepository;
     UserRepository    userRepository;
 
@@ -43,11 +41,11 @@ public class SettlementService {
         return suggestSettlements(tripId, null); // Gọi lại hàm chính với username = null
     }
 
-    public List<SettlementResponse> suggestSettlements(Long tripId, String username) {
-        Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new AppException(ErrorCode.TRIP_NOT_EXISTED));
+    public List<SettlementResponse> suggestSettlements(Long groupId, String username) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));
 
-        Map<Long, BigDecimal> balances = calculateBalances(trip);
+        Map<Long, BigDecimal> balances = calculateBalances(group);
 
         List<Map.Entry<Long, BigDecimal>> debtors = new ArrayList<>();
         List<Map.Entry<Long, BigDecimal>> creditors = new ArrayList<>();
@@ -74,19 +72,19 @@ public class SettlementService {
             BigDecimal creditAmount = creditors.get(j).getValue();
             BigDecimal amount = debtAmount.min(creditAmount);
 
-            TripParticipant from = participantRepository.findById(debtorId)
+            GroupParticipant from = participantRepository.findById(debtorId)
                     .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
-            TripParticipant to = participantRepository.findById(creditorId)
+            GroupParticipant to = participantRepository.findById(creditorId)
                     .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
 
             SettlementResponse suggestion = SettlementResponse.builder()
-                    .tripId(trip.getId())
+                    .groupId(group.getId())
                     .fromParticipantId(from.getId())
                     .fromParticipantName(from.getName())
                     .toParticipantId(to.getId())
                     .toParticipantName(to.getName())
                     .amount(amount)
-                    .currencyCode(trip.getDefaultCurrency().getCode())
+                    .currencyCode(group.getDefaultCurrency().getCode())
                     .status(Settlement.SettlementStatus.SUGGESTED)
                     .description("Gợi ý thanh toán từ hệ thống")
                     .build();
@@ -104,7 +102,7 @@ public class SettlementService {
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
             // Tìm participant của user theo email
-            TripParticipant currentParticipant = participantRepository.findByTripIdAndUserId(tripId, user.getId())
+            GroupParticipant currentParticipant = participantRepository.findByGroupIdAndUserId(groupId, user.getId())
                     .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
 
             Long userParticipantId = currentParticipant.getId();
@@ -118,16 +116,16 @@ public class SettlementService {
         return suggestions;
     }
 
-    public Map<Long, BigDecimal> calculateBalances(Trip trip) {
+    public Map<Long, BigDecimal> calculateBalances(Group group) {
         Map<Long, BigDecimal> balances = new HashMap<>();
 
         // Initialize all participant balances to zero
-        for (TripParticipant participant : trip.getParticipants()) {
+        for (GroupParticipant participant : group.getParticipants()) {
             balances.put(participant.getId(), BigDecimal.ZERO);
         }
 
         // Process all expenses in the trip
-        List<Expense> expenses = expenseRepository.findAllByTripId(trip.getId());
+        List<Expense> expenses = expenseRepository.findAllByGroupId(group.getId());
 
         for (Expense expense : expenses) {
             for (ExpenseSplit split : expense.getSplits()) {
@@ -137,7 +135,7 @@ public class SettlementService {
                 BigDecimal amount = split.getAmount();
 
                 // Convert to trip's default currency if needed
-                if (!expense.getCurrency().equals(trip.getDefaultCurrency())) {
+                if (!expense.getCurrency().equals(group.getDefaultCurrency())) {
                     // Implement currency conversion logic here if needed
                 }
 
@@ -148,7 +146,7 @@ public class SettlementService {
                     balances.put(participantId, balances.get(participantId).subtract(amount));
             }
         }
-        List<Settlement> settlements = settlementRepository.findByTripIdAndStatus(trip.getId(), Settlement.SettlementStatus.COMPLETED);
+        List<Settlement> settlements = settlementRepository.findByGroupIdAndStatus(group.getId(), Settlement.SettlementStatus.COMPLETED);
 
         for (Settlement s : settlements) {
             Long fromId = s.getFromParticipant().getId();
@@ -164,8 +162,8 @@ public class SettlementService {
         return balances;
     }
 
-    public List<BalanceResponse> convertToBalanceResponse(Trip trip, Map<Long, BigDecimal> balances) {
-        return trip.getParticipants().stream().map(participant -> {
+    public List<BalanceResponse> convertToBalanceResponse(Group group, Map<Long, BigDecimal> balances) {
+        return group.getParticipants().stream().map(participant -> {
             String participantUserId = null;
             if (participant.getUser() != null) {
                 participantUserId = participant.getUser().getId();
@@ -176,7 +174,7 @@ public class SettlementService {
                     .participantId(participant.getId())
                     .participantName(participant.getName())
                     .balance(balances.getOrDefault(participant.getId(), BigDecimal.ZERO))
-                    .currencyCode(trip.getDefaultCurrency().getCode())
+                    .currencyCode(group.getDefaultCurrency().getCode())
                     .build();
         }).collect(Collectors.toList());
     }
@@ -194,28 +192,28 @@ public class SettlementService {
         return settlementMapper.toSettlementResponse(settlementRepository.save(settlement));
     }
 
-    public List<SettlementResponse> getTripSettlements(Long tripId) {
-        return settlementRepository.findByTripId(tripId).stream()
+    public List<SettlementResponse> getGroupSettlements(Long groupId) {
+        return settlementRepository.findByGroupId(groupId).stream()
                 .map(settlementMapper::toSettlementResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public SettlementResponse createSettlement(SettlementCreationRequest request) {
-        Trip trip = tripRepository.findById(request.getTripId())
-                .orElseThrow(() -> new AppException(ErrorCode.TRIP_NOT_EXISTED));
+        Group group = groupRepository.findById(request.getGroupId())
+                .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));
 
-        TripParticipant from = participantRepository.findById(request.getFromParticipantId())
+        GroupParticipant from = participantRepository.findById(request.getFromParticipantId())
                 .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
 
-        TripParticipant to = participantRepository.findById(request.getToParticipantId())
+        GroupParticipant to = participantRepository.findById(request.getToParticipantId())
                 .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
 
         Currency currency = currencyRepository.findByCode(request.getCurrencyCode())
                 .orElseThrow(() -> new AppException(ErrorCode.CURRENCY_NOT_EXISTED));
 
         Settlement settlement = Settlement.builder()
-                .trip(trip)
+                .group(group)
                 .fromParticipant(from)
                 .toParticipant(to)
                 .amount(request.getAmount())

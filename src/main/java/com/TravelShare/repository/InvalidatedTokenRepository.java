@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Repository
 public interface InvalidatedTokenRepository extends JpaRepository<InvalidatedToken, String> {

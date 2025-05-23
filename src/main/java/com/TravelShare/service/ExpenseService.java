@@ -33,11 +33,10 @@ public class ExpenseService {
     ExpenseMapper expenseMapper;
     ExpenseRepository expenseRepository;
     UserRepository userRepository;
-    TripRepository tripRepository;
+    GroupRepository groupRepository;
     CurrencyRepository currencyRepository;
-    ExpenseCategoryRepository expenseCategoryRepository;
-    ExpenseSplitRepository expenseSplitRepository;
-    TripParticipantRepository tripParticipantRepository;
+    CategoryRepository categoryRepository;
+    GroupParticipantRepository groupParticipantRepository;
     MediaRepository mediaRepository;
 
     public ExpenseResponse getExpense(Long expenseId) {
@@ -53,9 +52,9 @@ public class ExpenseService {
                 .map(expenseMapper::toExpenseResponse).toList();
     }
 
-    public List<ExpenseResponse> getAllExpensesByTripId(Long tripId) {
-        log.info("In method get Expenses by trip");
-        return expenseRepository.findAllByTripId(tripId)
+    public List<ExpenseResponse> getAllExpensesByGroupId(Long groupId) {
+        log.info("In method get Expenses by group");
+        return expenseRepository.findAllByGroupId(groupId)
                 .stream()
                 .map(expenseMapper::toExpenseResponse).toList();
     }
@@ -64,13 +63,13 @@ public class ExpenseService {
     public ExpenseResponse createExpense(ExpenseCreationRequest request) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        ExpenseCategory category = expenseCategoryRepository.findById(request.getCategory())
+        Category category = categoryRepository.findById(request.getCategory())
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
 
-        Trip trip = tripRepository.findById(request.getTripId())
-                .orElseThrow(() -> new AppException(ErrorCode.TRIP_NOT_EXISTED));
+        Group group = groupRepository.findById(request.getGroupId())
+                .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));
 
-        TripParticipant payer = tripParticipantRepository.findById(request.getParticipantId())
+        GroupParticipant payer = groupParticipantRepository.findById(request.getParticipantId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         User user = userRepository.findByUsername(username)
@@ -85,7 +84,7 @@ public class ExpenseService {
         Currency currency;
         if (request.getCurrency() == null || request.getCurrency().isEmpty()) {
             // Use trip's default currency when not specified
-            currency = trip.getDefaultCurrency();
+            currency = group.getDefaultCurrency();
         } else {
             // Use the currency specified in the request
             currency = currencyRepository.findByCode(request.getCurrency())
@@ -93,7 +92,7 @@ public class ExpenseService {
         }
         expense.setCurrency(currency);
         expense.setCategory(category);
-        expense.setTrip(trip);
+        expense.setGroup(group);
         expense.setPayer(payer);
         expense.setCreatedAt(LocalDateTime.now());
         expense.setCreatedBy(user);
@@ -101,7 +100,7 @@ public class ExpenseService {
         switch (request.getSplitType()) {
             case EQUAL:
                 log.info("Expense equal: ");
-                createEqualSplits(expense, trip);
+                createEqualSplits(expense, group);
                 break;
             case AMOUNT:
                 log.info("Expense amount: ");
@@ -145,7 +144,7 @@ public class ExpenseService {
                     .build();
 
             if (splitRequest.getParticipantId() != null) {
-                TripParticipant participant = tripParticipantRepository
+                GroupParticipant participant = groupParticipantRepository
                         .findById(splitRequest.getParticipantId())
                         .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
                 split.setParticipant(participant);
@@ -166,7 +165,7 @@ public class ExpenseService {
                     .settlementStatus(ExpenseSplit.SettlementStatus.PENDING)
                     .build();
             if (splitRequest.getParticipantId() != null) {
-                TripParticipant participant = tripParticipantRepository
+                GroupParticipant participant = groupParticipantRepository
                         .findById(splitRequest.getParticipantId())
                         .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
                 split.setParticipant(participant);
@@ -197,10 +196,10 @@ public class ExpenseService {
         }
     }*/
 
-    private void createEqualSplits(Expense expense, Trip trip) {
-        BigDecimal count = BigDecimal.valueOf(trip.getParticipants().size());
+    private void createEqualSplits(Expense expense, Group group) {
+        BigDecimal count = BigDecimal.valueOf(group.getParticipants().size());
         BigDecimal equalAmount = expense.getAmount().divide(count, 2, RoundingMode.HALF_UP);
-        for (TripParticipant participant : trip.getParticipants()) {
+        for (GroupParticipant participant : group.getParticipants()) {
             boolean isPayer = participant.getId().equals(expense.getPayer().getId());
             ExpenseSplit split = ExpenseSplit.builder()
                     .expense(expense)
@@ -220,7 +219,11 @@ public class ExpenseService {
                 .orElseThrow(() -> new AppException(ErrorCode.EXPENSE_NOT_EXISTED));
 
         expenseMapper.updateExpense(expense, request);
-
+        if(request.getParticipantId() != null){
+            GroupParticipant payer = groupParticipantRepository.findById(request.getParticipantId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
+            expense.setPayer(payer);
+        }
         if (request.getCurrency() != null) {
             Currency currency = currencyRepository.findByCode(request.getCurrency())
                     .orElseThrow(() -> new AppException(ErrorCode.CURRENCY_NOT_EXISTED));
@@ -228,27 +231,40 @@ public class ExpenseService {
         }
 
         if (request.getCategory() != null) {
-            ExpenseCategory category = expenseCategoryRepository.findById(request.getCategory())
+            Category category = categoryRepository.findById(request.getCategory())
                     .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
             expense.setCategory(category);
         }
 
         if (request.getAttachmentIds() != null) {
-            if (!request.getAttachmentIds().isEmpty()) {
-                List<Media> attachments = mediaRepository.findAllById(request.getAttachmentIds());
-                for (Media media : attachments) {
+            List<Media> currentAttachments = new ArrayList<>(expense.getAttachments());
+
+            // 1. Xóa liên kết những Media không còn nằm trong attachmentIds mới
+            for (Media media : currentAttachments) {
+                if (!request.getAttachmentIds().contains(media.getId())) {
+                    media.setExpense(null);
+                    expense.getAttachments().remove(media);
+                }
+            }
+
+            // 2. Gán thêm những Media mới vào expense (nếu chưa có)
+            List<Media> newAttachments = mediaRepository.findAllById(request.getAttachmentIds());
+            for (Media media : newAttachments) {
+                if (!expense.getAttachments().contains(media)) {
                     media.setExpense(expense);
                     expense.getAttachments().add(media);
                 }
             }
         }
+
+
         if (request.getSplitType() != expense.getSplitType() || request.getSplits() != null) {
             expense.setSplitType(request.getSplitType());
 
             if (request.getSplitType() == Expense.SplitType.EQUAL) {
                 // Nếu splits là null hoặc rỗng, tạo từ trip participants
                 if (request.getSplits() == null || request.getSplits().isEmpty()) {
-                    Set<ExpenseSplitUpdateRequest> autoSplits = expense.getTrip().getParticipants().stream()
+                    Set<ExpenseSplitUpdateRequest> autoSplits = expense.getGroup().getParticipants().stream()
                             .map(participant -> {
                                 ExpenseSplitUpdateRequest split = new ExpenseSplitUpdateRequest();
                                 split.setParticipantId(participant.getId());
@@ -270,6 +286,7 @@ public class ExpenseService {
         return expenseMapper.toExpenseResponse(expenseRepository.save(expense));
     }
     private void updateExpenseSplits(Expense expense, Set<ExpenseSplitUpdateRequest> splitRequests){
+
         // 1. Tạo danh sách splits hiện tại dạng Map<participantId, ExpenseSplit>
         Map<Long, ExpenseSplit> currentSplitsMap = expense.getSplits().stream()
                 .filter(s->s.getParticipant() != null)
@@ -282,19 +299,24 @@ public class ExpenseService {
         for (ExpenseSplitUpdateRequest request : splitRequests) {
             Long participantId = request.getParticipantId();
 
-            TripParticipant participant = tripParticipantRepository.findById(participantId)
+            GroupParticipant participant = groupParticipantRepository.findById(participantId)
                     .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
+
+            boolean isPayer = participantId.equals(expense.getPayer().getId());
+            log.info("🔵 Updating split: participantId=" + participantId
+                    + ", payerId=" + expense.getPayer().getId()
+                    + ", isPayer=" + isPayer);
 
             if(currentSplitsMap.containsKey(participantId)){
                 // Đã tồn tại → update
                 ExpenseSplit existingSplit = currentSplitsMap.get(participantId);
-                updateSplitFields(existingSplit, request);
+                updateSplitFields(existingSplit, request, expense.getSplitType(), isPayer);
             } else {
                 // Không có → tạo mới
                 ExpenseSplit newSplit = new ExpenseSplit();
                 newSplit.setExpense(expense);
                 newSplit.setParticipant(participant);
-                updateSplitFields(newSplit, request);
+                updateSplitFields(newSplit, request, expense.getSplitType(), isPayer);
                 expense.getSplits().add(newSplit);
             }
         }
@@ -306,20 +328,18 @@ public class ExpenseService {
         toRemove.forEach(expense.getSplits()::remove);
     }
 
-    private void updateSplitFields(ExpenseSplit split, ExpenseSplitUpdateRequest request) {
-        switch (split.getExpense().getSplitType()) {
+    private void updateSplitFields(ExpenseSplit split, ExpenseSplitUpdateRequest request, Expense.SplitType splitType, boolean isPayer) {
+        switch (splitType) {
             case EQUAL -> {
                 split.setAmount(split.getExpense().getAmount()
                         .divide(BigDecimal.valueOf(split.getExpense().getSplits().size()), 2, RoundingMode.HALF_UP));
                 split.setPercentage(BigDecimal.valueOf(100)
                         .divide(BigDecimal.valueOf(split.getExpense().getSplits().size()), 2, RoundingMode.HALF_UP));
             }
-            case AMOUNT ->
-                    {
-                        split.setAmount(request.getAmount());
-                        split.setPercentage(null);
-                    }
-
+            case AMOUNT -> {
+                split.setAmount(request.getAmount());
+                split.setPercentage(null);
+            }
             case PERCENTAGE -> {
                 split.setPercentage(request.getPercentage());
                 BigDecimal amount = split.getExpense().getAmount()
@@ -336,14 +356,13 @@ public class ExpenseService {
             }
         }
 
-        if (request.getProofImageIds() != null && !request.getProofImageIds().isEmpty()) {
-            List<Media> mediaList = mediaRepository.findAllById(request.getProofImageIds());
-            for (Media media : mediaList) {
-                media.setExpenseSplit(split);
-                split.getProofImages().add(media);
-            }
+        // 🎯 Bạn có thể xử lý gì đó nếu đây là payer
+        if (isPayer) {
+            // Ví dụ: đánh dấu hoặc xử lý khác biệt
+            System.out.println("🔵 Đây là người thanh toán chính (payer)");
         }
     }
+
 
 
     public void deleteExpense(Long expenseId) {

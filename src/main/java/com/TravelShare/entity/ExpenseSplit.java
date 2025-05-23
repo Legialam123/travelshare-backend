@@ -6,8 +6,6 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -28,7 +26,7 @@ public class ExpenseSplit {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "participant_id")
-    TripParticipant participant;
+    GroupParticipant participant;
 
     @Column(nullable = false)
     BigDecimal amount;
@@ -38,17 +36,16 @@ public class ExpenseSplit {
 
     Integer shares;
 
-    @OneToMany(mappedBy = "expenseSplit", cascade = CascadeType.ALL, orphanRemoval = true)
-    Set<Media> proofImages = new HashSet<>();
-
     @Enumerated(EnumType.STRING)
     @Column(name = "settlement_status")
+    @Builder.Default
     private SettlementStatus settlementStatus = SettlementStatus.PENDING;
 
     @Column(name = "settled_at")
     private LocalDateTime settledAt;
 
     @Column(name = "is_payer")
+    @Builder.Default
     private boolean payer = false;
 
     public enum SettlementStatus {

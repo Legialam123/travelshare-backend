@@ -4,10 +4,8 @@ import com.TravelShare.dto.request.ExpenseCreationRequest;
 import com.TravelShare.dto.request.ExpenseUpdateRequest;
 import com.TravelShare.dto.response.ApiResponse;
 import com.TravelShare.dto.response.ExpenseResponse;
-import com.TravelShare.repository.ExpenseRepository;
 import com.TravelShare.service.ExpenseService;
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +21,6 @@ import java.util.List;
 @Slf4j
 public class ExpenseController {
     ExpenseService expenseService;
-    ExpenseRepository expenseRepository;
 
     @GetMapping
     public ApiResponse<List<ExpenseResponse>> getAllExpenses() {
@@ -32,11 +29,12 @@ public class ExpenseController {
                 .result(expenseService.getAllExpenses())
                 .build();
     }
-    @GetMapping("/trip/{tripId}")
-    public ApiResponse<List<ExpenseResponse>> getAllExpensesByTripId(@PathVariable Long tripId) {
-        log.info("Getting all expenses for trip with id: {}", tripId);
+    
+    @GetMapping("/group/{groupId}")
+    public ApiResponse<List<ExpenseResponse>> getAllExpensesByGroupId(@PathVariable Long groupId) {
+        log.info("Getting all expenses for group with id: {}", groupId);
         return ApiResponse.<List<ExpenseResponse>>builder()
-                .result(expenseService.getAllExpensesByTripId(tripId))
+                .result(expenseService.getAllExpensesByGroupId(groupId))
                 .build();
     }
 
