@@ -135,10 +135,13 @@ public class ExpenseService {
 
     private void createAmountSplits(Expense expense, Set<ExpenseSplitCreationRequest> splitRequests) {
         for (ExpenseSplitCreationRequest splitRequest : splitRequests) {
+            BigDecimal percentage = splitRequest.getAmount().divide(expense.getAmount(), 2, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
             boolean isPayer = splitRequest.getParticipantId().equals(expense.getPayer().getId());
             ExpenseSplit split = ExpenseSplit.builder()
                     .expense(expense)
                     .amount(splitRequest.getAmount())
+                    .percentage(percentage)
                     .payer(isPayer)
                     .settlementStatus(ExpenseSplit.SettlementStatus.PENDING)
                     .build();
@@ -156,7 +159,7 @@ public class ExpenseService {
     private void createPercentageSplits(Expense expense, Set<ExpenseSplitCreationRequest> splitRequests) {
         for (ExpenseSplitCreationRequest splitRequest : splitRequests) {
             boolean isPayer = splitRequest.getParticipantId().equals(expense.getPayer().getId());
-            BigDecimal amount = expense.getAmount().multiply(splitRequest.getPercentage()).divide(BigDecimal.valueOf(100));
+            BigDecimal amount = expense.getAmount().multiply(splitRequest.getPercentage()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP);
             ExpenseSplit split = ExpenseSplit.builder()
                     .expense(expense)
                     .amount(amount)
@@ -257,26 +260,22 @@ public class ExpenseService {
             }
         }
 
-
-        if (request.getSplitType() != expense.getSplitType() || request.getSplits() != null) {
+        boolean needUpdateSplits = request.getSplitType() != expense.getSplitType() || request.getSplits() != null ||
+                (request.getSplitType() == Expense.SplitType.EQUAL && !request.getAmount().equals(expense.getAmount()));
+        if (needUpdateSplits) {
             expense.setSplitType(request.getSplitType());
 
             if (request.getSplitType() == Expense.SplitType.EQUAL) {
-                // Nếu splits là null hoặc rỗng, tạo từ trip participants
-                if (request.getSplits() == null || request.getSplits().isEmpty()) {
-                    Set<ExpenseSplitUpdateRequest> autoSplits = expense.getGroup().getParticipants().stream()
-                            .map(participant -> {
-                                ExpenseSplitUpdateRequest split = new ExpenseSplitUpdateRequest();
-                                split.setParticipantId(participant.getId());
-                                return split;
-                            })
-                            .collect(Collectors.toSet());
-                    request.setSplits(autoSplits);
-                }
-                // Tiến hành xử lý bình thường
-                updateExpenseSplits(expense, request.getSplits());
+                Set<ExpenseSplitUpdateRequest> autoSplits = expense.getGroup().getParticipants().stream()
+                        .map(participant -> {
+                            ExpenseSplitUpdateRequest split = new ExpenseSplitUpdateRequest();
+                            split.setParticipantId(participant.getId());
+                            return split;
+                        })
+                        .collect(Collectors.toSet());
+                updateExpenseSplits(expense, autoSplits);
             } else {
-                // Trường hợp AMOUNT, PERCENTAGE, SHARES
+                // Trường hợp AMOUNT, PERCENTAGE
                 if (request.getSplits() == null || request.getSplits().isEmpty()) {
                     throw new AppException(ErrorCode.INVALID_REQUEST);
                 }
@@ -303,9 +302,6 @@ public class ExpenseService {
                     .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
 
             boolean isPayer = participantId.equals(expense.getPayer().getId());
-            log.info("🔵 Updating split: participantId=" + participantId
-                    + ", payerId=" + expense.getPayer().getId()
-                    + ", isPayer=" + isPayer);
 
             if(currentSplitsMap.containsKey(participantId)){
                 // Đã tồn tại → update
@@ -331,14 +327,20 @@ public class ExpenseService {
     private void updateSplitFields(ExpenseSplit split, ExpenseSplitUpdateRequest request, Expense.SplitType splitType, boolean isPayer) {
         switch (splitType) {
             case EQUAL -> {
+                int totalParticipants = split.getExpense().getGroup().getParticipants().size();
                 split.setAmount(split.getExpense().getAmount()
-                        .divide(BigDecimal.valueOf(split.getExpense().getSplits().size()), 2, RoundingMode.HALF_UP));
+                        .divide(BigDecimal.valueOf(totalParticipants), 2, RoundingMode.HALF_UP));
                 split.setPercentage(BigDecimal.valueOf(100)
-                        .divide(BigDecimal.valueOf(split.getExpense().getSplits().size()), 2, RoundingMode.HALF_UP));
+                        .divide(BigDecimal.valueOf(totalParticipants), 2, RoundingMode.HALF_UP));
             }
             case AMOUNT -> {
                 split.setAmount(request.getAmount());
-                split.setPercentage(null);
+                if (split.getExpense().getAmount().compareTo(BigDecimal.ZERO) > 0) {
+                    split.setPercentage(request.getAmount()
+                            .divide(split.getExpense().getAmount(), 4, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal.valueOf(100))
+                            .setScale(2, RoundingMode.HALF_UP));
+                }
             }
             case PERCENTAGE -> {
                 split.setPercentage(request.getPercentage());
@@ -349,17 +351,13 @@ public class ExpenseService {
             }
         }
 
+        split.setPayer(isPayer);
+
         if (request.getSettlementStatus() != null) {
             split.setSettlementStatus(request.getSettlementStatus());
             if (request.getSettlementStatus() == ExpenseSplit.SettlementStatus.SETTLED) {
                 split.setSettledAt(LocalDateTime.now());
             }
-        }
-
-        // 🎯 Bạn có thể xử lý gì đó nếu đây là payer
-        if (isPayer) {
-            // Ví dụ: đánh dấu hoặc xử lý khác biệt
-            System.out.println("🔵 Đây là người thanh toán chính (payer)");
         }
     }
 

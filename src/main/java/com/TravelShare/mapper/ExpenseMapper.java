@@ -5,6 +5,7 @@ import com.TravelShare.dto.request.ExpenseUpdateRequest;
 import com.TravelShare.dto.response.ExpenseResponse;
 import com.TravelShare.entity.Expense;
 import com.TravelShare.entity.ExpenseSplit;
+import com.TravelShare.dto.response.ExpenseSplitResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -21,6 +22,10 @@ public interface ExpenseMapper {
     @Mapping(target = "splits", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     Expense toExpense(ExpenseCreationRequest request);
+
+    @Mapping(source = "percentage", target = "percentage")
+    @Mapping(source = "payer", target = "isPayer")
+    ExpenseSplitResponse toExpenseSplitResponse(ExpenseSplit expenseSplit);
 
     @Mapping(source = "group.defaultCurrency.code", target = "group.defaultCurrency")
     @Mapping(expression = "java(calculateTotalSettled(expense))", target = "totalSettled")

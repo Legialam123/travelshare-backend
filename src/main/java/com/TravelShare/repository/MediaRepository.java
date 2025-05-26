@@ -12,7 +12,6 @@ public interface MediaRepository extends JpaRepository<Media,Long>{
     List<Media> findByGroupId(Long groupId);
     List<Media> findByMediaType(Media.MediaType mediaType);
     List<Media> findByExpenseId(Long expenseId);
-    List<Media> findByExpenseSplitId(Long expenseSplitId);
     List<Media> findByUserId(String userId);
     Optional<Media>  findByFileName(String fileName);
     Optional<Media> findFirstByGroupIdAndMediaTypeAndDescription(Long groupId, Media.MediaType mediaType, String description);

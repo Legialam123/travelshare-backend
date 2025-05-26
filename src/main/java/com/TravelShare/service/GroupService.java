@@ -75,14 +75,34 @@ public class GroupService {
         // Lưu group để tạo ID
         group = groupRepository.save(group);
 
-        // Tạo thêm lời mời nếu có
+        // Tạo thêm participants nếu có
         if (request.getParticipants() != null) {
             for (GroupInvitationRequest invitee : request.getParticipants()) {
-                createInvitation(group.getId(), invitee);
+                // Tạo participant trước
+                GroupParticipant newParticipant = createParticipantForInvitation(group, invitee);
+                // Thêm trực tiếp vào collection của group trong memory
+                group.getParticipants().add(newParticipant);
             }
         }
 
+        // Map và trả về ngay từ object trong memory
         return groupMapper.toGroupResponse(group);
+    }
+
+    // Phương thức mới thay thế việc gọi createInvitation
+    private GroupParticipant createParticipantForInvitation(Group group, GroupInvitationRequest invitee) {
+        String token = UUID.randomUUID().toString();
+
+        GroupParticipant participant = GroupParticipant.builder()
+                .group(group)
+                .name(invitee.getName())
+                .role(invitee.getRole() != null ? invitee.getRole() : "MEMBER")
+                .invitationToken(token)
+                .invitedAt(LocalDateTime.now())
+                .status(GroupParticipant.InvitationStatus.PENDING)
+                .build();
+
+        return groupParticipantRepository.save(participant);
     }
 
     private String generateJoinCode() {
@@ -190,7 +210,6 @@ public class GroupService {
 
         groupParticipantRepository.save(participant);
     }
-
     public InvitationLinkResponse createInvitation(Long groupId, GroupInvitationRequest request) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));

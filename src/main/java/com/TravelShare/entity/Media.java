@@ -55,17 +55,21 @@ public class Media {
     @JoinColumn(name = "group_id")
     Group group;
 
+    /*
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "expense_split_id")
     ExpenseSplit expenseSplit;
+    */
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "expense_id")
     Expense expense;
 
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     User user;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "settlement_id")

@@ -24,7 +24,7 @@ public class ExpenseResponse {
 
     CurrencyResponse currency;
 
-    GroupSummaryResponse group;
+    GroupResponse group;
 
     GroupParticipantResponse payer;
 

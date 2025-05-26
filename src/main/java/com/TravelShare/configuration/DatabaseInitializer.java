@@ -50,7 +50,7 @@ public class DatabaseInitializer implements CommandLineRunner {
         initRegularUsers();
     }
     private void initRegularUsers() {
-        createUserIfNotExists("lam123", "123456", "legialam95@gmail.com.com", "Lam Le");
+        createUserIfNotExists("lam123", "123456", "legialam95@gmail.com", "Lam Le");
         createUserIfNotExists("liem456", "123456", "liem@example.com", "Liem Le");
     }
 
