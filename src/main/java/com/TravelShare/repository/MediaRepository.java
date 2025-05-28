@@ -12,7 +12,7 @@ public interface MediaRepository extends JpaRepository<Media,Long>{
     List<Media> findByGroupId(Long groupId);
     List<Media> findByMediaType(Media.MediaType mediaType);
     List<Media> findByExpenseId(Long expenseId);
-    List<Media> findByUserId(String userId);
+    List<Media> findByUserIdOrderByUploadedAtDesc(String userId);
     Optional<Media>  findByFileName(String fileName);
     Optional<Media> findFirstByGroupIdAndMediaTypeAndDescription(Long groupId, Media.MediaType mediaType, String description);
     Optional<Media> findFirstByUserIdAndDescriptionOrderByUploadedAtDesc(String userId, String description);

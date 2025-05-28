@@ -264,7 +264,7 @@ public class MediaService {
 
     @Transactional(readOnly = true)
     public List<MediaResponse> getUserMedia ( String userId){
-        return mediaRepository.findByUserId(userId).stream()
+        return mediaRepository.findByUserIdOrderByUploadedAtDesc(userId).stream()
                 .map(mediaMapper::toMediaResponse)
                 .toList();
     }
