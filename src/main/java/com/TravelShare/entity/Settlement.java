@@ -48,17 +48,17 @@ public class Settlement {
     @Enumerated(EnumType.STRING)
     SettlementMethod settlementMethod;
 
-    String referenceCode; // For bank transfers or e-wallets
+    String vnpayTransactionId;
 
     LocalDateTime createdAt;
     String description;
 
     public enum SettlementStatus {
-        PENDING, COMPLETED, CANCELLED,  SUGGESTED
+        PENDING, COMPLETED, FAILED
     }
 
     public enum SettlementMethod {
-        CASH, BANK_TRANSFER, E_WALLET, OTHER
+        CASH, VNPAY
     }
 
     @OneToMany(mappedBy = "settlement", cascade = CascadeType.ALL, orphanRemoval = true)

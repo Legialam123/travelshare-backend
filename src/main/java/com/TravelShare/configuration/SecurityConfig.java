@@ -20,7 +20,7 @@ public class SecurityConfig {
     private final String[] PUBLIC_POST_ENDPOINTS = {
             "/users", "/auth/login", "/auth/introspect", "/auth/logout", "/auth/refresh", "/auth/forgot-password", "/auth/reset-password", "/category","/expense",
             "/group","/currency", "/media/download", "/media/download/**"};
-    private final String[] PUBLIC_GET_ENDPOINTS = {"/auth/verify-email", "/auth/reset-password", "/media/download/**"};
+    private final String[] PUBLIC_GET_ENDPOINTS = {"/auth/verify-email", "/auth/reset-password", "/media/download/**", "/settlement/vnpay/callback", "/settlement/vnpay/ipn"};
     @Autowired
     private CustomJwtDecoder customJwtDecoder;
 

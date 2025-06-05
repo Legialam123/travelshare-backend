@@ -33,7 +33,6 @@ spring:
             enable: true
             required: true
 jwt:
-
   signerKey: ${JWT_SIGNER_KEY}
   valid-duration: 3600 # in second
   refreshable-duration: 604800 # in seconds
@@ -60,3 +59,10 @@ logging:
       hibernate:
         SQL: DEBUG
         type: TRACE
+
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE}
+  hash-secret: ${VNPAY_HASH_SECRET}
+  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:8080/TravelShare/settlement/vnpay/callback
+  ipn-url: http://localhost:8080/TravelShare/settlement/vnpay/ipn

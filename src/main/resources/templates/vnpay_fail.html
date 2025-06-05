@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thanh toán thất bại</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #fff6f6; text-align: center; padding-top: 80px; }
+        .fail { color: #e74c3c; font-size: 2.2em; margin-bottom: 20px; }
+        .icon { font-size: 4em; color: #e74c3c; }
+        .info { margin: 30px auto; display: inline-block; text-align: left; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #e0e0e0; padding: 24px 36px; }
+        .info div { margin-bottom: 10px; font-size: 1.1em; }
+        .label { font-weight: bold; color: #333; }
+        .btn { margin-top: 30px; padding: 10px 30px; background: #e74c3c; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; cursor: pointer; text-decoration: none; }
+        .btn:hover { background: #c0392b; }
+    </style>
+</head>
+<body>
+    <div class="icon">❌</div>
+    <div class="fail">Thanh toán VNPay thất bại!</div>
+    <div class="info">
+        <div><span class="label">Người thanh toán:</span> <span th:text="${from}"></span></div>
+        <div><span class="label">Người nhận:</span> <span th:text="${to}"></span></div>
+        <div><span class="label">Số tiền:</span> <span th:text="${amount}"></span> <span th:text="${currency}"></span></div>
+        <div><span class="label">Mã giao dịch:</span> <span th:text="${transactionNo}"></span></div>
+        <div><span class="label">Mô tả:</span> <span th:text="${description}"></span></div>
+        <div><span class="label">Trạng thái:</span> <span th:text="${status}"></span></div>
+    </div>
+</body>
+</html> 

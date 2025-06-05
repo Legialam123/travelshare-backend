@@ -85,7 +85,6 @@ public class SettlementService {
                     .toParticipantName(to.getName())
                     .amount(amount)
                     .currencyCode(group.getDefaultCurrency().getCode())
-                    .status(Settlement.SettlementStatus.SUGGESTED)
                     .description("Gợi ý thanh toán từ hệ thống")
                     .build();
 
@@ -190,6 +189,17 @@ public class SettlementService {
         }
 
         return settlementMapper.toSettlementResponse(settlementRepository.save(settlement));
+    }
+
+    public void updateSettlementStatusVnPay(Long settlementId, Settlement.SettlementStatus status, String vnpayTransactionId) {
+        Settlement settlement = settlementRepository.findById(settlementId)
+                .orElseThrow(() -> new AppException(ErrorCode.SETTLEMENT_NOT_FOUND));
+        settlement.setStatus(status);
+        settlement.setVnpayTransactionId(vnpayTransactionId);
+        if (status == Settlement.SettlementStatus.COMPLETED) {
+            settlement.setSettledAt(LocalDateTime.now());
+        }
+        settlementRepository.save(settlement);
     }
 
     public List<SettlementResponse> getGroupSettlements(Long groupId) {
