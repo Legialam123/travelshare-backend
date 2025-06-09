@@ -7,6 +7,7 @@ import com.TravelShare.dto.request.ExpenseUpdateRequest;
 import com.TravelShare.dto.response.ExpenseResponse;
 import com.TravelShare.entity.*;
 import com.TravelShare.entity.Currency;
+import com.TravelShare.event.ExpenseCreatedEvent;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.ExpenseMapper;
@@ -16,6 +17,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +40,7 @@ public class ExpenseService {
     CategoryRepository categoryRepository;
     GroupParticipantRepository groupParticipantRepository;
     MediaRepository mediaRepository;
+    ApplicationEventPublisher eventPublisher;
 
     public ExpenseResponse getExpense(Long expenseId) {
         return expenseMapper.toExpenseResponse(expenseRepository
@@ -130,6 +133,8 @@ public class ExpenseService {
         }*/
 
         expenseRepository.save(expense);
+
+        eventPublisher.publishEvent(new ExpenseCreatedEvent(this, expense, user));
         return expenseMapper.toExpenseResponse(expense);
     }
 

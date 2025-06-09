@@ -21,7 +21,6 @@ public interface GroupMapper {
     @Mapping(target = "defaultCurrency", source = "defaultCurrency.code")
     GroupResponse toGroupResponse(Group group);
 
-    @Mapping(target = "defaultCurrency", source = "defaultCurrency.code")
     GroupSummaryResponse toGroupSummaryResponse(Group group);
 
     @Mapping(target = "defaultCurrency", ignore = true)

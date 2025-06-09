@@ -16,5 +16,4 @@ public class GroupSummaryResponse {
     UserSummaryResponse createdBy;
     LocalDateTime createdAt;
     Double budgetLimit;
-    String defaultCurrency;
 } 
