@@ -6,9 +6,7 @@ import com.TravelShare.dto.response.ExpenseResponse;
 import com.TravelShare.entity.Expense;
 import com.TravelShare.entity.ExpenseSplit;
 import com.TravelShare.dto.response.ExpenseSplitResponse;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.*;
 
 import java.math.BigDecimal;
 
@@ -47,6 +45,7 @@ public interface ExpenseMapper {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "currency", ignore = true)
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "splits", ignore = true)

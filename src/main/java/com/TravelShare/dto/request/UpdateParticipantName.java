@@ -8,8 +8,8 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class GroupInvitationRequest {
-    String name;
-    String role;
-    String email;
+public class UpdateParticipantName {
+    Long groupId;
+    Long participantId;
+    String newName;
 }

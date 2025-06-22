@@ -26,7 +26,7 @@ public class GroupEventListener {
 
         NotificationCreationRequest notiRequest = NotificationCreationRequest.builder()
                 .type("GROUP_UPDATED")
-                .content("Nhóm '" + group.getName() + "' đã được cập nhật bởi" + creator.getFullName())
+                .content("Nhóm '" + group.getName() + "' đã được cập nhật bởi " + creator.getFullName())
                 .groupId(group.getId())
                 .referenceId(group.getId())
                 .build();

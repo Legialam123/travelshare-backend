@@ -13,9 +13,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -31,6 +33,20 @@ public class NotificationController {
     public ApiResponse<List<NotificationResponse>> getNotificationsByGroup(@PathVariable Long groupId) {
         return ApiResponse.<List<NotificationResponse>>builder()
                 .result(notificationService.getNotificationsByGroup(groupId))
+                .build();
+    }
+
+    @GetMapping("/my")
+    public ApiResponse<List<NotificationResponse>> getMyNotifications(
+            @RequestParam(required = false) Long groupId,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return ApiResponse.<List<NotificationResponse>>builder()
+                .result(notificationService.getNotificationsByUser(user, groupId, type, fromDate, toDate))
                 .build();
     }
 

@@ -1,5 +1,6 @@
 package com.TravelShare.service;
 
+import com.TravelShare.dto.request.RequestCreationRequest;
 import com.TravelShare.dto.request.SettlementCreationRequest;
 import com.TravelShare.dto.request.SettlementUpdateRequest;
 import com.TravelShare.dto.response.BalanceResponse;
@@ -36,6 +37,8 @@ public class SettlementService {
     CurrencyRepository currencyRepository;
     ExpenseRepository expenseRepository;
     UserRepository    userRepository;
+    RequestRepository requestRepository;
+    RequestService requestService;
 
     public List<SettlementResponse> suggestSettlements(Long tripId) {
         return suggestSettlements(tripId, null); // Gọi lại hàm chính với username = null
@@ -235,6 +238,46 @@ public class SettlementService {
                 .build();
 
         settlement = settlementRepository.save(settlement);
+
+        User fromUser = from.getUser();
+        User toUser = to.getUser();
+        String groupName = group.getName();
+        String fromName = from.getName();
+        String toName = from.getName();
+        String amountStr = settlement.getAmount().toPlainString();
+        String currencyCode = settlement.getCurrency().getCode();
+        // Nếu là yêu cầu thanh toán (người nhận gửi cho người nợ)
+        if (request.getSettlementMethod() == null && request.getStatus() == Settlement.SettlementStatus.PENDING) {
+            String content = String.format(
+                    "Yêu cầu thanh toán từ %s trong nhóm %s, số tiền %s %s",
+                    toName, groupName, amountStr, currencyCode
+            );
+            RequestCreationRequest req = RequestCreationRequest.builder()
+                    .type("PAYMENT_REQUEST")
+                    .receiverId(fromUser.getId())
+                    .groupId(group.getId())
+                    .referenceId(settlement.getId())
+                    .content(content)
+                    .build();
+            requestService.createRequest(req, toUser);
+        }
+
+        // Nếu là xác nhận đã thanh toán (người nợ gửi cho người nhận)
+        if (request.getSettlementMethod() != null && request.getStatus() == Settlement.SettlementStatus.PENDING) {
+            String content = String.format(
+                    "%s xác nhận đã thanh toán cho bạn trong nhóm %s, số tiền %s %s",
+                    fromName, groupName, amountStr, currencyCode
+            );
+            RequestCreationRequest req = RequestCreationRequest.builder()
+                    .type("PAYMENT_CONFIRM")
+                    .receiverId(toUser.getId())
+                    .groupId(group.getId())
+                    .referenceId(settlement.getId())
+                    .content(content)
+                    .build();
+            requestService.createRequest(req, fromUser);
+        }
+
         return settlementMapper.toSettlementResponse(settlement);
     }
 }

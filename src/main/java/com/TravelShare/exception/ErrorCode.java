@@ -60,8 +60,11 @@ public enum ErrorCode {
     CANNOT_UPDATE_SYSTEM_CATEGORY(1050, "Cannot update system category", HttpStatus.BAD_REQUEST),
     CANNOT_DELETE_SYSTEM_CATEGORY(1051, "Cannot delete system category", HttpStatus.BAD_REQUEST),
     CANNOT_UPDATE_CATEGORY_TYPE(1052, "Cannot update category of this type", HttpStatus.BAD_REQUEST),
-    CANNOT_DELETE_CATEGORY_TYPE(1053, "Cannot delete category of this type", HttpStatus.BAD_REQUEST);
-
+    CANNOT_DELETE_CATEGORY_TYPE(1053, "Cannot delete category of this type", HttpStatus.BAD_REQUEST),
+    REQUEST_NOT_EXISTED(1054, "Yêu cầu không tồn tại", HttpStatus.NOT_FOUND),
+    REQUEST_ALREADY_HANDLED(1055, "Yêu cầu đã được xử lý", HttpStatus.BAD_REQUEST),
+    PARTICIPANT_NOT_IN_GROUP(1056, "Người dùng này không tồn tại trong Group", HttpStatus.BAD_REQUEST),
+    ALREADY_INVITED(1057, "Đã gửi lời mời", HttpStatus.BAD_REQUEST);
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;
         this.message = message;

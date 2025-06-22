@@ -28,6 +28,14 @@ public class GroupController {
                 .build();
     }
 
+    @PutMapping("/{groupId}/participant/{participantId}/update_name")
+    public ApiResponse<String> updateParticipantName(@RequestBody UpdateParticipantName request) {
+        groupService.updateParticipantName(request);
+        return ApiResponse.<String>builder()
+                .result("Tên đã được cập nhật thành công")
+                .build();
+    }
+
     @DeleteMapping("/{groupId}/leave")
     public ApiResponse<String> leaveGroup(@PathVariable Long groupId) {
         groupService.leaveGroup(groupId);

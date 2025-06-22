@@ -2,7 +2,6 @@ package com.TravelShare.dto.request;
 
 import com.TravelShare.entity.Settlement;
 import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,7 +12,11 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SettlementCreationRequest {
+public class VnPaySettlementRequest {
+    // Handle VnPay settlement request
+    Long settlementId;
+
+    // Handle VnPay settlement creation
     Long groupId;
     Long fromParticipantId;
     Long toParticipantId;
@@ -23,5 +26,4 @@ public class SettlementCreationRequest {
     Settlement.SettlementMethod settlementMethod;
     String description;
     Settlement.SettlementStatus status;
-
 }

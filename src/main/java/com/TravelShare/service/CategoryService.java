@@ -7,6 +7,7 @@ import com.TravelShare.entity.Category;
 import com.TravelShare.entity.Group;
 import com.TravelShare.entity.GroupParticipant;
 import com.TravelShare.entity.User;
+import com.TravelShare.event.CategoryExpenseCreatedEvent;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.CategoryMapper;
@@ -18,6 +19,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +36,7 @@ public class CategoryService {
     GroupRepository groupRepository;
     UserRepository userRepository;
     GroupParticipantRepository groupParticipantRepository;
+    ApplicationEventPublisher eventPublisher;
 
     /**
      * Lấy thông tin người dùng hiện tại
@@ -128,8 +131,11 @@ public class CategoryService {
         category.setIsSystemCategory(false);
         category.setGroup(group);
         category.setCreatedBy(currentUser);
-        
-        return categoryMapper.toCategoryResponse(categoryRepository.save(category));
+
+
+        Category savedCategory = categoryRepository.save(category);
+        eventPublisher.publishEvent(new CategoryExpenseCreatedEvent(this, savedCategory, currentUser));
+        return categoryMapper.toCategoryResponse(savedCategory);
     }
 
     /**

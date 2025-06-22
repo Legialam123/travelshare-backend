@@ -4,12 +4,14 @@ import com.TravelShare.dto.request.UserCreationRequest;
 import com.TravelShare.dto.request.UserUpdateRequest;
 import com.TravelShare.dto.response.ApiResponse;
 import com.TravelShare.dto.response.UserResponse;
+import com.TravelShare.repository.UserRepository;
 import com.TravelShare.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.List;
 @Slf4j
 public class UserController {
     UserService userService;
+    UserRepository userRepository;
 
     @PostMapping
     ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
@@ -56,5 +59,10 @@ public class UserController {
         return ApiResponse.<List<UserResponse>>builder()
                 .result(userService.getAllUsers())
                 .build();
+    }
+
+    @GetMapping("/check-email")
+    public ResponseEntity<Boolean> checkEmail(@RequestParam String email) {
+        return ResponseEntity.ok(userRepository.existsByEmail(email));
     }
 }

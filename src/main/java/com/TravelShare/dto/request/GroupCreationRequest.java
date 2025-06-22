@@ -18,6 +18,7 @@ public class GroupCreationRequest {
     Double budgetLimit;
     String defaultCurrency;
     Long categoryId;
+    String creatorName;
 
     // Thêm danh sách participants dự kiến
     Set<GroupInvitationRequest> participants;

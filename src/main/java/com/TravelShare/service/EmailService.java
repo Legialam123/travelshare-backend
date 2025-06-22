@@ -92,6 +92,7 @@ public class EmailService {
         }
     }
 
+    @Async
     public void sendResetPasswordLink(ForgotPasswordRequest request) {
         User user = userRepository.findByUsernameOrEmail(request.getIdentifier(), request.getIdentifier())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -134,6 +135,7 @@ public class EmailService {
         }
     }
 
+    @Async
     public void resetPassword(ResetPasswordRequest request){
         PasswordResetToken resetToken = passwordResetTokenRepository.findById(request.getToken())
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_KEY));
@@ -154,5 +156,31 @@ public class EmailService {
 
         resetToken.setUsed(true);
         passwordResetTokenRepository.save(resetToken);
+    }
+
+    @Async
+    public void sendInvitationEmail(String toEmail, String groupName, String inviteLink) {
+        String subject = "Bạn được mời tham gia nhóm " + groupName + " trên IShareMoney";
+        String htmlMsg = "<h3>Xin chào!</h3>"
+                + "<p>Bạn được mời tham gia nhóm <b>\"" + groupName + "\"</b> trên IShareMoney.</p>"
+                + "<p>Nhấn vào liên kết bên dưới để đăng ký hoặc tham gia nhóm:</p>"
+                + "<p><a href=\"" + inviteLink + "\">Tham gia nhóm</a></p>"
+                + "<p>Nếu bạn không quan tâm, hãy bỏ qua email này.</p>"
+                + "<p>Trân trọng,<br />Đội ngũ IShareMoney</p>";
+
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(htmlMsg, true);
+
+            mailSender.send(mimeMessage);
+            log.info("Invitation email sent to: {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Failed to send invitation email to {}: {}", toEmail, e.getMessage());
+        }
     }
 }

@@ -31,7 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Controller
+@RestController
 @RequestMapping("/settlement")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -44,7 +44,6 @@ public class SettlementController {
     VnPayService vnPayService;
 
     @GetMapping("/group/{groupId}/balances")
-    @ResponseBody
     public ApiResponse<List<BalanceResponse>> getTripBalances(@PathVariable Long groupId) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));
@@ -57,8 +56,7 @@ public class SettlementController {
     }
 
     @GetMapping("/group/{groupId}/suggested")
-    @ResponseBody
-    public ApiResponse<List<SettlementResponse>> getSuggestedSettlements(@PathVariable Long groupId, @RequestParam(name = "userOnly", required = false, defaultValue = "false") boolean userOnly,  HttpServletRequest request) {
+    public ApiResponse<List<SettlementResponse>> getSuggestedSettlements(@PathVariable Long groupId, @RequestParam(name = "userOnly", required = false, defaultValue = "false") boolean userOnly, HttpServletRequest request) {
         Principal principal = request.getUserPrincipal();
         List<SettlementResponse> suggestions;
 
@@ -76,7 +74,6 @@ public class SettlementController {
     }
 
     @PostMapping
-    @ResponseBody
     public ApiResponse<SettlementResponse> createSettlement(
             @Valid @RequestBody SettlementCreationRequest request) {
         return ApiResponse.<SettlementResponse>builder()
@@ -86,7 +83,6 @@ public class SettlementController {
 
     // ✅ 4. Xác nhận thanh toán (Confirm Settlement)
     @PatchMapping("/{settlementId}/confirm")
-    @ResponseBody
     public ApiResponse<SettlementResponse> updateSettlementStatus(
             @PathVariable Long settlementId,
             @RequestBody SettlementUpdateRequest request) {
@@ -96,83 +92,10 @@ public class SettlementController {
     }
 
     @GetMapping("/group/{groupId}")
-    @ResponseBody
     public ApiResponse<List<SettlementResponse>> getGroupSettlements(@PathVariable Long groupId) {
         return ApiResponse.<List<SettlementResponse>>builder()
                 .result(settlementService.getGroupSettlements(groupId))
                 .build();
-    }
-
-    @PostMapping("vnpay/create")
-    @ResponseBody
-    public ApiResponse<?> createVnPaySettlement(@RequestBody SettlementCreationRequest request) {
-        SettlementResponse settlementResponse = settlementService.createSettlement(request);
-        Settlement settlement = settlementRepository.findById(settlementResponse.getId())
-                .orElseThrow(() -> new AppException(ErrorCode.SETTLEMENT_NOT_FOUND));
-        String paymentUrl = vnPayService.createPaymentUrl(settlement);
-        Map<String, Object> result = new HashMap<>();
-        result.put("paymentUrl", paymentUrl);
-        result.put("settlementId", settlement.getId());
-        return ApiResponse.builder()
-                .result(result)
-                .build();
-    }
-
-    @GetMapping("vnpay/callback")
-    public String vnPayReturn(HttpServletRequest request, Model model) {
-        String queryString = request.getQueryString();
-        Map<String, String> params = new LinkedHashMap<>();
-        if (queryString != null) {
-            for (String param : queryString.split("&")) {
-                int idx = param.indexOf("=");
-                if (idx > 0) {
-                    String key = param.substring(0, idx);
-                    String value = param.substring(idx + 1); // giữ nguyên dấu +
-                    params.put(key, value);
-                }
-            }
-        }
-        boolean valid = vnPayService.validateVnPayCallback(params);
-        Long settlementId = Long.valueOf(params.get("vnp_TxnRef"));
-        String vnp_TransactionStatus = params.get("vnp_TransactionStatus");
-        String vnp_TransactionNo = params.get("vnp_TransactionNo");
-
-        // Lấy thông tin chi tiết settlement
-        Settlement settlement = settlementRepository.findById(settlementId)
-                .orElse(null);
-        if (settlement != null) {
-            model.addAttribute("from", settlement.getFromParticipant().getName());
-            model.addAttribute("to", settlement.getToParticipant().getName());
-            model.addAttribute("amount", settlement.getAmount());
-            model.addAttribute("currency", settlement.getCurrency().getCode());
-            model.addAttribute("description", settlement.getDescription());
-        }
-        model.addAttribute("transactionNo", vnp_TransactionNo);
-        model.addAttribute("status", valid && "00".equals(vnp_TransactionStatus) ? "Thành công" : "Thất bại");
-
-        if (valid && "00".equals(vnp_TransactionStatus)) {
-            settlementService.updateSettlementStatusVnPay(settlementId, Settlement.SettlementStatus.COMPLETED, vnp_TransactionNo);
-            return "vnpay_success";
-        } else {
-            settlementService.updateSettlementStatusVnPay(settlementId, Settlement.SettlementStatus.FAILED, vnp_TransactionNo);
-            return "vnpay_fail";
-        }
-    }
-
-    @GetMapping("vnpay/ipn")
-    public ResponseEntity<String> vnPayIpn(@RequestParam Map<String, String> params) {
-        boolean valid = vnPayService.validateVnPayCallback(params);
-        Long settlementId = Long.valueOf(params.get("vnp_TxnRef"));
-        String vnp_TransactionStatus = params.get("vnp_TransactionStatus");
-        String vnp_TransactionNo = params.get("vnp_TransactionNo");
-
-        if (valid && "00".equals(vnp_TransactionStatus)) {
-            settlementService.updateSettlementStatusVnPay(settlementId, Settlement.SettlementStatus.COMPLETED, vnp_TransactionNo);
-            return ResponseEntity.ok("{\"RspCode\":\"00\",\"Message\":\"Confirm Success\"}");
-        } else {
-            settlementService.updateSettlementStatusVnPay(settlementId, Settlement.SettlementStatus.FAILED, vnp_TransactionNo);
-            return ResponseEntity.ok("{\"RspCode\":\"97\",\"Message\":\"Invalid signature\"}");
-        }
     }
 }
 

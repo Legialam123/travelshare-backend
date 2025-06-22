@@ -38,6 +38,7 @@ public class ExpenseEventListener {
         notificationService.createNotification(notiRequest, creator);
     }
 
+    @EventListener
     public void handleExpenseUpdated(ExpenseUpdatedEvent event) {
         log.info("ExpenseUpdatedEvent received for expense id: {}", event.getExpense().getId());
         var expense = event.getExpense();
@@ -45,7 +46,7 @@ public class ExpenseEventListener {
         var creator = event.getUpdater();
 
         NotificationCreationRequest notiRequest = NotificationCreationRequest.builder()
-                .type("EXPENSE_CREATED")
+                .type("EXPENSE_UPDATED")
                 .content("Chi phí '" + expense.getTitle() + "' đã được cập nhật ở nhóm " + group.getName())
                 .groupId(group.getId())
                 .referenceId(expense.getId())
@@ -54,6 +55,7 @@ public class ExpenseEventListener {
         notificationService.createNotification(notiRequest, creator);
     }
 
+    @EventListener
     public void handleExpenseDeleted(ExpenseDeletedEvent event) {
         log.info("ExpenseDeletedEvent received for expense id: {}", event.getExpense().getId());
         var expense = event.getExpense();
@@ -61,7 +63,7 @@ public class ExpenseEventListener {
         var creator = event.getDeleter();
 
         NotificationCreationRequest notiRequest = NotificationCreationRequest.builder()
-                .type("EXPENSE_CREATED")
+                .type("EXPENSE_DELETED")
                 .content("Chi phí '" + expense.getTitle() + "' đã được xóa khỏi nhóm " + group.getName())
                 .groupId(group.getId())
                 .referenceId(expense.getId())

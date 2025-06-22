@@ -11,13 +11,20 @@ import com.TravelShare.mapper.NotificationMapper;
 import com.TravelShare.repository.GroupRepository;
 import com.TravelShare.repository.NotificationRepository;
 import com.TravelShare.repository.UserRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,6 +65,44 @@ public class NotificationService {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));
         List<Notification> notifications = notificationRepository.findByGroup(group);
+        return notifications.stream()
+                .map(notificationMapper::toNotificationResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<NotificationResponse> getNotificationsByUser(
+            User user,
+            Long groupId,
+            String type,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+        List<Group> tempGroups = groupRepository.findByParticipants_User_Id(user.getId());
+        if (groupId != null) {
+            tempGroups = tempGroups.stream()
+                    .filter(g -> g.getId().equals(groupId))
+                    .collect(Collectors.toList());
+        }
+        final List<Group> groups = tempGroups;
+
+        Specification<Notification> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(root.get("group").in(groups));
+            predicates.add(cb.notEqual(root.get("createdBy").get("id"), user.getId()));
+            if (type != null) {
+                predicates.add(cb.equal(root.get("type"), type));
+            }
+            if (fromDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate.atStartOfDay()));
+            }
+            if (toDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toDate.atTime(23, 59, 59)));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        List<Notification> notifications = notificationRepository.findAll(spec);
+
         return notifications.stream()
                 .map(notificationMapper::toNotificationResponse)
                 .collect(Collectors.toList());

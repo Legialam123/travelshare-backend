@@ -8,6 +8,8 @@ import com.TravelShare.dto.response.ExpenseResponse;
 import com.TravelShare.entity.*;
 import com.TravelShare.entity.Currency;
 import com.TravelShare.event.ExpenseCreatedEvent;
+import com.TravelShare.event.ExpenseDeletedEvent;
+import com.TravelShare.event.ExpenseUpdatedEvent;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.ExpenseMapper;
@@ -225,7 +227,6 @@ public class ExpenseService {
     public ExpenseResponse updateExpense(Long expenseId, ExpenseUpdateRequest request) {
         Expense expense = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new AppException(ErrorCode.EXPENSE_NOT_EXISTED));
-
         expenseMapper.updateExpense(expense, request);
         if(request.getParticipantId() != null){
             GroupParticipant payer = groupParticipantRepository.findById(request.getParticipantId())
@@ -265,8 +266,11 @@ public class ExpenseService {
             }
         }
 
-        boolean needUpdateSplits = request.getSplitType() != expense.getSplitType() || request.getSplits() != null ||
-                (request.getSplitType() == Expense.SplitType.EQUAL && !request.getAmount().equals(expense.getAmount()));
+        boolean hasSplitType = request.getSplitType() != null;
+        boolean hasSplits = request.getSplits() != null;
+        boolean hasAmount = request.getAmount() != null;
+
+        boolean needUpdateSplits = hasSplitType || hasSplits || hasAmount;
         if (needUpdateSplits) {
             expense.setSplitType(request.getSplitType());
 
@@ -287,8 +291,11 @@ public class ExpenseService {
                 updateExpenseSplits(expense, request.getSplits());
             }
         }
-        return expenseMapper.toExpenseResponse(expenseRepository.save(expense));
+        Expense expenseSaved = expenseRepository.save(expense);
+        eventPublisher.publishEvent(new ExpenseUpdatedEvent(this, expenseSaved, expenseSaved.getCreatedBy()));
+        return expenseMapper.toExpenseResponse(expenseSaved);
     }
+
     private void updateExpenseSplits(Expense expense, Set<ExpenseSplitUpdateRequest> splitRequests){
 
         // 1. Tạo danh sách splits hiện tại dạng Map<participantId, ExpenseSplit>
@@ -366,9 +373,10 @@ public class ExpenseService {
         }
     }
 
-
-
     public void deleteExpense(Long expenseId) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new AppException(ErrorCode.EXPENSE_NOT_EXISTED));
         expenseRepository.deleteById(expenseId);
+        eventPublisher.publishEvent(new ExpenseDeletedEvent(this, expense, expense.getCreatedBy()));
     }
 }

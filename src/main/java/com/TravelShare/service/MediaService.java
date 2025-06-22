@@ -5,6 +5,7 @@ import com.TravelShare.entity.Expense;
 import com.TravelShare.entity.Group;
 import com.TravelShare.entity.Media;
 import com.TravelShare.entity.User;
+import com.TravelShare.event.MediaUploadedEvent;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.MediaMapper;
@@ -12,6 +13,7 @@ import com.TravelShare.repository.ExpenseRepository;
 import com.TravelShare.repository.GroupRepository;
 import com.TravelShare.repository.MediaRepository;
 import com.TravelShare.repository.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -46,7 +48,7 @@ public class MediaService {
     final MediaMapper mediaMapper;
     final GroupRepository groupRepository;
     final ExpenseRepository expenseRepository;
-
+    final ApplicationEventPublisher eventPublisher;
 
     @Value("${app.file.storage-dir}")
     private String storageDir;
@@ -93,7 +95,7 @@ public class MediaService {
                     .uploadedBy(currentUser)
                     .build();
             media = mediaRepository.save(media);
-
+            eventPublisher.publishEvent(new MediaUploadedEvent(this, media, currentUser));
             return mediaMapper.toMediaResponse(media);
 
         } catch (IOException e) {
@@ -139,7 +141,7 @@ public class MediaService {
                     .uploadedBy(currentUser)
                     .build();
             media = mediaRepository.save(media);
-
+            eventPublisher.publishEvent(new MediaUploadedEvent(this, media, currentUser));
             return mediaMapper.toMediaResponse(media);
         }
         catch (IOException e) {
