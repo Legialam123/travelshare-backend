@@ -2,14 +2,12 @@ package com.TravelShare.service;
 
 import com.TravelShare.dto.request.ForgotPasswordRequest;
 import com.TravelShare.dto.request.ResetPasswordRequest;
-import com.TravelShare.entity.PasswordResetToken;
 import com.TravelShare.entity.User;
-import com.TravelShare.entity.VerificationEmailToken;
+import com.TravelShare.entity.UserToken;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
-import com.TravelShare.repository.PasswordResetTokenRepository;
 import com.TravelShare.repository.UserRepository;
-import com.TravelShare.repository.VerificationEmailTokenRepository;
+import com.TravelShare.repository.UserTokenRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
@@ -23,9 +21,12 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.UUID;
+
+import static java.time.LocalDateTime.now;
 
 @Service
 @RequiredArgsConstructor
@@ -33,10 +34,10 @@ import java.util.UUID;
 @Slf4j
 public class EmailService {
     JavaMailSender mailSender;
-    VerificationEmailTokenRepository verificationEmailTokenRepository;
     UserRepository userRepository;
-    PasswordResetTokenRepository passwordResetTokenRepository;
     PasswordEncoder passwordEncoder;
+    UserTokenService userTokenService;
+    UserTokenRepository userTokenRepository;
 
     @NonFinal
     @Value("${app.email.from}")
@@ -52,21 +53,13 @@ public class EmailService {
 
     @NonFinal
     @Value("${app.email.verification-expiration}")
-    int verificationExpHours;
+    Duration verificationExpiration;
 
     @Async
     public void sendVerificationEmail(User user) {
-        String token = UUID.randomUUID().toString();
-        LocalDateTime now = LocalDateTime.now();
-        VerificationEmailToken verificationEmailToken = VerificationEmailToken.builder()
-                .token(token)
-                .user(user)
-                .createdAt(now)
-                .expiryTime(now.plusHours(verificationExpHours))
-                .build();
-        verificationEmailTokenRepository.save(verificationEmailToken);
+        UserToken userToken = userTokenService.createToken(user, UserToken.TokenType.VERIFY_EMAIL,verificationExpiration);
 
-        String verificationLink = verificationBaseUrl + "?token=" + verificationEmailToken.getToken();
+        String verificationLink = verificationBaseUrl + "?token=" + userToken.getToken();
 
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -80,7 +73,7 @@ public class EmailService {
                     + "<p>Cảm ơn bạn đã đăng ký tài khoản tại TravelShare. "
                     + "Vui lòng nhấn vào liên kết bên dưới để xác thực tài khoản của bạn:</p>"
                     + "<p><a href=\"" + verificationLink + "\">Xác thực tài khoản</a></p>"
-                    + "<p>Liên kết này sẽ hết hạn sau " + verificationExpHours + " giờ.</p>"
+                    + "<p>Liên kết này sẽ hết hạn sau " + verificationExpiration.toHours() + " giờ.</p>"
                     + "<p>Trân trọng,<br />Đội ngũ TravelShare</p>";
 
             helper.setText(htmlMsg, true);
@@ -92,25 +85,14 @@ public class EmailService {
         }
     }
 
+
     @Async
     public void sendResetPasswordLink(ForgotPasswordRequest request) {
         User user = userRepository.findByUsernameOrEmail(request.getIdentifier(), request.getIdentifier())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        String token = UUID.randomUUID().toString();
-        LocalDateTime expiredAt = LocalDateTime.now().plusHours(verificationExpHours);
-
-        PasswordResetToken resetToken = PasswordResetToken.builder()
-                .token(token)
-                .email(user.getEmail())
-                .expiredAt(expiredAt)
-                .used(false)
-                .build();
-
-        passwordResetTokenRepository.save(resetToken);
-
+        UserToken userToken = userTokenService.createToken(user, UserToken.TokenType.RESET_PASSWORD, verificationExpiration);
         //Send Reset Password Link to email User
-        String resetLink = resetPasswordBaseUrl + "?token=" + resetToken.getToken();
+        String resetLink = resetPasswordBaseUrl + "?token=" + userToken.getToken();
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
@@ -123,7 +105,7 @@ public class EmailService {
                     + "<p>Bạn vừa yêu cầu đặt lại mật khẩu cho tài khoản của mình tại TravelShare. "
                     + "Vui lòng nhấn vào liên kết bên dưới để đặt lại mật khẩu của bạn:</p>"
                     + "<p><a href=\"" + resetLink + "\">Đặt lại mật khẩu</a></p>"
-                    + "<p>Liên kết này sẽ hết hạn sau " + verificationExpHours + " giờ.</p>"
+                    + "<p>Liên kết này sẽ hết hạn sau " + verificationExpiration.toHours() + " giờ.</p>"
                     + "<p>Trân trọng,<br />Đội ngũ TravelShare</p>";
 
             helper.setText(htmlMsg, true);
@@ -135,28 +117,6 @@ public class EmailService {
         }
     }
 
-    @Async
-    public void resetPassword(ResetPasswordRequest request){
-        PasswordResetToken resetToken = passwordResetTokenRepository.findById(request.getToken())
-                .orElseThrow(() -> new AppException(ErrorCode.INVALID_KEY));
-
-        if (resetToken.isUsed()) {
-            throw new AppException(ErrorCode.TOKEN_USED);
-        }
-
-        if (resetToken.getExpiredAt().isBefore(LocalDateTime.now())) {
-            throw new AppException(ErrorCode.TOKEN_EXPIRED);
-        }
-
-        User user = userRepository.findByEmail(resetToken.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
-
-        resetToken.setUsed(true);
-        passwordResetTokenRepository.save(resetToken);
-    }
 
     @Async
     public void sendInvitationEmail(String toEmail, String groupName, String inviteLink) {

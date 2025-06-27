@@ -6,6 +6,7 @@ import com.TravelShare.dto.response.IntrospectResponse;
 import com.TravelShare.entity.InvalidatedToken;
 import com.TravelShare.entity.RefreshToken;
 import com.TravelShare.entity.User;
+import com.TravelShare.entity.UserToken;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.repository.InvalidatedTokenRepository;
@@ -42,6 +43,7 @@ public class AuthenticationService {
     UserRepository userRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
     RefreshTokenRepository refreshTokenRepository;
+
     @NonFinal
     @Value("${jwt.signerKey}")
     protected String SIGNER_KEY;

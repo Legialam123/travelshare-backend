@@ -2,28 +2,103 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Thanh toán thất bại</title>
+    <title>Kết quả giao dịch</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: Arial, sans-serif; background: #fff6f6; text-align: center; padding-top: 80px; }
-        .fail { color: #e74c3c; font-size: 2.2em; margin-bottom: 20px; }
-        .icon { font-size: 4em; color: #e74c3c; }
-        .info { margin: 30px auto; display: inline-block; text-align: left; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #e0e0e0; padding: 24px 36px; }
-        .info div { margin-bottom: 10px; font-size: 1.1em; }
-        .label { font-weight: bold; color: #333; }
-        .btn { margin-top: 30px; padding: 10px 30px; background: #e74c3c; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; cursor: pointer; text-decoration: none; }
-        .btn:hover { background: #c0392b; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(180deg, #fff6f6 0%, #ffffff 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 420px;
+            margin: 40px auto 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px 0 32px 0;
+        }
+        .logo {
+            display: block;
+            margin: 0 auto 18px auto;
+            width: 120px;
+            height: auto;
+        }
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fdeaea;
+            border-radius: 20px;
+            padding: 6px 18px 6px 12px;
+            font-weight: 600;
+            font-size: 1.15em;
+            margin: 0 auto 24px auto;
+            width: fit-content;
+        }
+        .status-icon {
+            display: flex;
+            align-items: center;
+            margin-right: 8px;
+        }
+        .status-fail {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        .info-list {
+            margin: 0;
+            padding: 0 32px;
+            list-style: none;
+        }
+        .info-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            font-size: 1.08em;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 7px;
+        }
+        .label {
+            color: #888;
+            font-weight: 500;
+        }
+        .value {
+            color: #222;
+            font-weight: 500;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-all;
+        }
+        @media (max-width: 480px) {
+            .container { border-radius: 0; box-shadow: none; margin: 0; }
+            .info-list { padding: 0 10px; }
+        }
     </style>
 </head>
 <body>
-    <div class="icon">❌</div>
-    <div class="fail">Thanh toán VNPay thất bại!</div>
-    <div class="info">
-        <div><span class="label">Người thanh toán:</span> <span th:text="${from}"></span></div>
-        <div><span class="label">Người nhận:</span> <span th:text="${to}"></span></div>
-        <div><span class="label">Số tiền:</span> <span th:text="${amount}"></span> <span th:text="${currency}"></span></div>
-        <div><span class="label">Mã giao dịch:</span> <span th:text="${transactionNo}"></span></div>
-        <div><span class="label">Mô tả:</span> <span th:text="${description}"></span></div>
-        <div><span class="label">Trạng thái:</span> <span th:text="${status}"></span></div>
+<div class="container">
+    <img class="logo" src="https://pay.vnpay.vn/images/brands/logo-en.svg" alt="VNPay Logo">
+    <div class="status-row">
+        <span class="status-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="#e74c3c" viewBox="0 0 16 16">
+                <circle cx="8" cy="8" r="8" fill="#e74c3c"/>
+                <path d="M10.53 5.47a.75.75 0 0 0-1.06 0L8 6.94 6.53 5.47a.75.75 0 1 0-1.06 1.06L6.94 8l-1.47 1.47a.75.75 0 1 0 1.06 1.06L8 9.06l1.47 1.47a.75.75 0 0 0 1.06-1.06L9.06 8l1.47-1.47a.75.75 0 0 0 0-1.06z" fill="#fff"/>
+            </svg>
+        </span>
+        <span class="status-fail">Thanh toán thất bại</span>
     </div>
+    <ul class="info-list">
+        <li><span class="label">Mã giao dịch:</span> <span class="value" th:text="${transactionNo}"></span></li>
+        <li><span class="label">Người thanh toán:</span> <span class="value" th:text="${from}"></span></li>
+        <li><span class="label">Người nhận:</span> <span class="value" th:text="${to}"></span></li>
+        <li><span class="label">Số tiền:</span> <span class="value"><span th:text="${amount}"></span> <span th:text="${currency}"></span></span></li>
+        <li><span class="label">Mô tả:</span> <span class="value" th:text="${description}"></span></li>
+        <li><span class="label">Thời gian giao dịch:</span> <span class="value" th:text="${transactionTime}"></span></li>
+        <li><span class="label">Trạng thái:</span> <span class="value" th:text="${status}"></span></li>
+    </ul>
+</div>
 </body>
-</html> 
+</html>

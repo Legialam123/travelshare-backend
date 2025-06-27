@@ -89,6 +89,19 @@ public class VnPayController {
         String vnp_TransactionStatus = params.get("vnp_TransactionStatus");
         String vnp_TransactionNo = params.get("vnp_TransactionNo");
 
+        // Lấy thời gian giao dịch từ callback (vnp_PayDate dạng yyyyMMddHHmmss)
+        String vnp_PayDate = params.get("vnp_PayDate");
+        String transactionTime = "";
+        if (vnp_PayDate != null && vnp_PayDate.length() == 14) {
+            // Chuyển sang định dạng dd/MM/yyyy HH:mm:ss
+            transactionTime = vnp_PayDate.substring(6,8) + "/" +
+                    vnp_PayDate.substring(4,6) + "/" +
+                    vnp_PayDate.substring(0,4) + " " +
+                    vnp_PayDate.substring(8,10) + ":" +
+                    vnp_PayDate.substring(10,12) + ":" +
+                    vnp_PayDate.substring(12,14);
+        }
+
         // Lấy thông tin chi tiết settlement
         Settlement settlement = settlementRepository.findById(settlementId)
                 .orElse(null);
@@ -100,6 +113,7 @@ public class VnPayController {
             model.addAttribute("description", settlement.getDescription());
         }
         model.addAttribute("transactionNo", vnp_TransactionNo);
+        model.addAttribute("transactionTime", transactionTime); // <-- Thêm dòng này
         model.addAttribute("status", valid && "00".equals(vnp_TransactionStatus) ? "Thành công" : "Thất bại");
 
         if (valid && "00".equals(vnp_TransactionStatus)) {

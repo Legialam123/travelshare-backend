@@ -462,12 +462,15 @@ public class GroupService {
             throw new AppException(ErrorCode.NOT_GROUP_ADMIN);
         }
 
-        // Không cho phép xóa nếu là admin cuối cùng
-        if (groupParticipantRepository.countByGroupIdAndRole(groupId, "ADMIN") <= 1) {
-            throw new AppException(ErrorCode.CANNOT_REMOVE_LAST_ADMIN);
-        }
+        GroupParticipant participant = groupParticipantRepository.findById(participantId)
+                .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
 
-        groupParticipantRepository.deleteById(participantId);
+        participant.setUser(null);
+        participant.setStatus(GroupParticipant.InvitationStatus.PENDING);
+        participant.setInvitationToken(null);
+        participant.setJoinedAt(null);
+        participant.setInvitedAt(null);
+        groupParticipantRepository.save(participant);
     }
 
     public void leaveGroup(Long groupId) {
@@ -484,7 +487,12 @@ public class GroupService {
             throw new AppException(ErrorCode.CANNOT_LEAVE_AS_LAST_ADMIN);
         }
 
-        groupParticipantRepository.delete(participant);
+        participant.setUser(null);
+        participant.setStatus(GroupParticipant.InvitationStatus.PENDING);
+        participant.setInvitationToken(null);
+        participant.setJoinedAt(null);
+        participant.setInvitedAt(null);
+        groupParticipantRepository.save(participant);
     }
 
     public void updateParticipantRole(UpdateParticipantRole request) {

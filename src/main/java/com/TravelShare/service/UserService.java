@@ -1,10 +1,12 @@
 package com.TravelShare.service;
 
+import com.TravelShare.dto.request.ResetPasswordRequest;
 import com.TravelShare.dto.request.UserCreationRequest;
 import com.TravelShare.dto.request.UserUpdateRequest;
 import com.TravelShare.dto.response.UserResponse;
 import com.TravelShare.entity.Media;
 import com.TravelShare.entity.User;
+import com.TravelShare.entity.UserToken;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.UserMapper;
@@ -17,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -33,6 +36,7 @@ public class UserService {
     PasswordEncoder passwordEncoder;
     EmailService emailService;
     MediaRepository mediaRepository;
+    UserTokenService userTokenService;
 
     public UserResponse createUser(UserCreationRequest request) {
         //Check if user already exists
@@ -108,5 +112,26 @@ public class UserService {
     public UserResponse getUser(String id) {
         return userMapper.toUserResponse(
                 userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
+    }
+
+    public void resetPassword(ResetPasswordRequest request){
+        UserToken resetToken = userTokenService.verifyToken(request.getToken());
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    public boolean processResetPassword(ResetPasswordRequest request, Model model) {
+        try {
+            resetPassword(request);
+            model.addAttribute("success", true);
+            model.addAttribute("message", "Mật khẩu đã được đặt lại thành công!");
+            return true;
+        } catch (Exception e) {
+            model.addAttribute("success", false);
+            model.addAttribute("message", e.getMessage());
+            model.addAttribute("token", request.getToken());
+            return false;
+        }
     }
 }

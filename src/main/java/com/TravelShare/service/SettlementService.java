@@ -211,6 +211,13 @@ public class SettlementService {
                 .collect(Collectors.toList());
     }
 
+    public List<SettlementResponse> getUserSettlements(String userId) {
+        List<Settlement> settlements = settlementRepository.findByFromParticipant_User_IdOrToParticipant_User_Id(userId, userId);
+        return settlements.stream()
+                .map(settlementMapper::toSettlementResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public SettlementResponse createSettlement(SettlementCreationRequest request) {
         Group group = groupRepository.findById(request.getGroupId())

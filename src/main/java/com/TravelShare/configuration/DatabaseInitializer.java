@@ -51,7 +51,7 @@ public class DatabaseInitializer implements CommandLineRunner {
     }
     private void initRegularUsers() {
         createUserIfNotExists("lam123", "123456", "legialam95@gmail.com", "Lam Le");
-        createUserIfNotExists("liem456", "123456", "liem@example.com", "Liem Le");
+        createUserIfNotExists("liem123", "123456", "liem@example.com", "Liem Le");
     }
 
     private void createUserIfNotExists(String username, String rawPassword, String email, String fullName) {

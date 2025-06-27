@@ -18,18 +18,4 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findByCreatedById(String userId);
     List<Notification> findByType(String type);
     List<Notification> findByGroupIn(List<Group> groups);
-
-    @Query("""
-    SELECT n FROM Notification n
-    WHERE n.group IN :groups
-    AND (:type IS NULL OR n.type = :type)
-    AND (:fromDate IS NULL OR n.createdAt >= :fromDate)
-    AND (:toDate IS NULL OR n.createdAt <= :toDate)
-    """)
-    List<Notification> findByGroupInAndFilter(
-            @Param("groups") List<Group> groups,
-            @Param("type") String type,
-            @Param("fromDate") LocalDateTime fromDate,
-            @Param("toDate") LocalDateTime toDate
-    );
 }

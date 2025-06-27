@@ -97,5 +97,13 @@ public class SettlementController {
                 .result(settlementService.getGroupSettlements(groupId))
                 .build();
     }
+
+    @GetMapping("/user/{userId}")
+    @ResponseBody
+    public ApiResponse<List<SettlementResponse>> getUserSettlements(@PathVariable String userId) {
+        return ApiResponse.<List<SettlementResponse>>builder()
+                .result(settlementService.getUserSettlements(userId))
+                .build();
+    }
 }
 

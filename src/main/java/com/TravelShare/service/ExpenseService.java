@@ -5,6 +5,7 @@ import com.TravelShare.dto.request.ExpenseSplitCreationRequest;
 import com.TravelShare.dto.request.ExpenseSplitUpdateRequest;
 import com.TravelShare.dto.request.ExpenseUpdateRequest;
 import com.TravelShare.dto.response.ExpenseResponse;
+import com.TravelShare.dto.response.UserExpenseSummaryResponse;
 import com.TravelShare.entity.*;
 import com.TravelShare.entity.Currency;
 import com.TravelShare.event.ExpenseCreatedEvent;
@@ -14,17 +15,20 @@ import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.ExpenseMapper;
 import com.TravelShare.repository.*;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -51,17 +55,64 @@ public class ExpenseService {
     }
 
     public List<ExpenseResponse> getAllExpenses() {
-        log.info("In method get Expenses");
         return expenseRepository.findAll()
                 .stream()
                 .map(expenseMapper::toExpenseResponse).toList();
     }
 
     public List<ExpenseResponse> getAllExpensesByGroupId(Long groupId) {
-        log.info("In method get Expenses by group");
         return expenseRepository.findAllByGroupId(groupId)
                 .stream()
                 .map(expenseMapper::toExpenseResponse).toList();
+    }
+
+    private Specification<Expense> expenseFilterSpec(
+            String userId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Long groupId,
+            Long categoryId
+    ) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (userId != null) {
+                predicates.add(cb.equal(root.get("payer").get("user").get("id"), userId));
+            }
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("expenseDate"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("expenseDate"), endDate));
+            }
+            if (groupId != null) {
+                predicates.add(cb.equal(root.get("group").get("id"), groupId));
+            }
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.get("category").get("id"), categoryId));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    public UserExpenseSummaryResponse getUserExpenseSummary(
+            String userId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Long groupId,
+            Long categoryId
+    ) {
+        Specification<Expense> spec = expenseFilterSpec(userId, startDate, endDate, groupId, categoryId);
+        List<Expense> expenses = expenseRepository.findAll(spec);
+
+        BigDecimal total = expenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<ExpenseResponse> expenseResponses = expenses.stream()
+                .map(expenseMapper::toExpenseResponse)
+                .collect(Collectors.toList());
+
+        return new UserExpenseSummaryResponse(total, expenseResponses);
     }
 
     @Transactional
