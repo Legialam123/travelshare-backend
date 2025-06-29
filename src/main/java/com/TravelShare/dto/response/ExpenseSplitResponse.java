@@ -18,7 +18,6 @@ public class ExpenseSplitResponse {
     BigDecimal amount;
     BigDecimal percentage;
     List<MediaResponse> proofImages;
-    ExpenseSplit.SettlementStatus settlementStatus;
     LocalDateTime settledAt;
     boolean isPayer;
 }

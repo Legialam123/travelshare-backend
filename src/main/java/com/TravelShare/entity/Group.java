@@ -32,8 +32,6 @@ public class Group {
     @Column(unique = true, nullable = false)
     String joinCode;
 
-    Double budgetLimit;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "default_currency_code", nullable = false)
     Currency defaultCurrency;

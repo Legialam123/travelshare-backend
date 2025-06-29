@@ -6,6 +6,7 @@ import com.TravelShare.dto.request.SettlementUpdateRequest;
 import com.TravelShare.dto.response.BalanceResponse;
 import com.TravelShare.dto.response.SettlementResponse;
 import com.TravelShare.entity.*;
+import com.TravelShare.entity.Currency;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.SettlementMapper;
@@ -19,10 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -172,6 +170,8 @@ public class SettlementService {
             }
 
             return BalanceResponse.builder()
+                    .groupId(group.getId())
+                    .groupName(group.getName())
                     .participantUserId(participantUserId)
                     .participantId(participant.getId())
                     .participantName(participant.getName())
@@ -179,6 +179,37 @@ public class SettlementService {
                     .currencyCode(group.getDefaultCurrency().getCode())
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    public List<BalanceResponse> getUserBalancesByGroup(String userId) {
+        List<Group> groups = groupRepository.findByParticipants_User_Id(userId);
+        List<BalanceResponse> result = new ArrayList<>();
+
+        for (Group group : groups) {
+            // Tìm participantId của user trong group này
+            Optional<GroupParticipant> myParticipantOpt = group.getParticipants().stream()
+                    .filter(p -> p.getUser() != null && p.getUser().getId().equals(userId))
+                    .findFirst();
+            if (myParticipantOpt.isEmpty()) continue;
+            GroupParticipant myParticipant = myParticipantOpt.get();
+
+            // Tính balances cho group
+            Map<Long, BigDecimal> balances = calculateBalances(group);
+
+            // Lấy số dư của user trong group này
+            BigDecimal balance = balances.getOrDefault(myParticipant.getId(), BigDecimal.ZERO);
+
+            result.add(BalanceResponse.builder()
+                    .groupId(group.getId())
+                    .groupName(group.getName())
+                    .participantUserId(userId)
+                    .participantId(myParticipant.getId())
+                    .participantName(myParticipant.getName())
+                    .balance(balance)
+                    .currencyCode(group.getDefaultCurrency().getCode())
+                    .build());
+        }
+        return result;
     }
 
     @Transactional

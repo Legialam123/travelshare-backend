@@ -15,5 +15,4 @@ public class GroupSummaryResponse {
     String name;
     UserSummaryResponse createdBy;
     LocalDateTime createdAt;
-    Double budgetLimit;
 } 

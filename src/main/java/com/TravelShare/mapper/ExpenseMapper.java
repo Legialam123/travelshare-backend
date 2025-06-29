@@ -26,24 +26,8 @@ public interface ExpenseMapper {
     ExpenseSplitResponse toExpenseSplitResponse(ExpenseSplit expenseSplit);
 
     @Mapping(source = "group.defaultCurrency.code", target = "group.defaultCurrency")
-    @Mapping(expression = "java(calculateTotalSettled(expense))", target = "totalSettled")
-    @Mapping(expression = "java(calculateTotalPending(expense))", target = "totalPending")
     @Mapping(expression = "java(expense.getSplits().size())", target = "participantCount")
     ExpenseResponse toExpenseResponse(Expense expense);
-
-    default BigDecimal calculateTotalSettled(Expense expense) {
-        return expense.getSplits().stream()
-                .filter(split -> split.getSettlementStatus() == ExpenseSplit.SettlementStatus.SETTLED)
-                .map(ExpenseSplit::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    default BigDecimal calculateTotalPending(Expense expense) {
-        return expense.getSplits().stream()
-                .filter(split -> split.getSettlementStatus() == ExpenseSplit.SettlementStatus.PENDING)
-                .map(ExpenseSplit::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "currency", ignore = true)

@@ -15,7 +15,6 @@ public class GroupResponse {
     String name;
     UserSummaryResponse createdBy;
     LocalDateTime createdAt;
-    Double budgetLimit;
     String defaultCurrency;
     String joinCode;
     List<MediaResponse> groupImages;

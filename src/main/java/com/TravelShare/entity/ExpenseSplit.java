@@ -34,26 +34,7 @@ public class ExpenseSplit {
     @Column(precision = 5, scale = 2)
     BigDecimal percentage;
 
-    Integer shares;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "settlement_status")
-    @Builder.Default
-    private SettlementStatus settlementStatus = SettlementStatus.PENDING;
-
-    @Column(name = "settled_at")
-    private LocalDateTime settledAt;
-
     @Column(name = "is_payer")
     @Builder.Default
     private boolean payer = false;
-
-    public enum SettlementStatus {
-        PENDING, SETTLED, DISPUTED
-    }
-
-    public void markAsSettled() {
-        this.settlementStatus = SettlementStatus.SETTLED;
-        this.settledAt = LocalDateTime.now();
-    }
 }

@@ -15,7 +15,6 @@ public class GroupCreationRequest {
     String name;
     String createdBy;
     LocalDateTime createdAt;
-    Double budgetLimit;
     String defaultCurrency;
     Long categoryId;
     String creatorName;

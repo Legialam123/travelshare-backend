@@ -39,9 +39,14 @@ import java.util.Map;
 public class SettlementController {
 
     SettlementService settlementService;
-    SettlementRepository settlementRepository;
     GroupRepository groupRepository;
-    VnPayService vnPayService;
+
+    @GetMapping("/user/{userId}/groups")
+    public ApiResponse<List<BalanceResponse>> getUserBalancesByGroup(@PathVariable String userId) {
+        return ApiResponse.<List<BalanceResponse>>builder()
+                .result(settlementService.getUserBalancesByGroup(userId))
+                .build();
+    }
 
     @GetMapping("/group/{groupId}/balances")
     public ApiResponse<List<BalanceResponse>> getTripBalances(@PathVariable Long groupId) {

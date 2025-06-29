@@ -10,6 +10,5 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class GroupUpdateRequest {
     String name;
-    Double budgetLimit;
     String defaultCurrencyCode;
 }

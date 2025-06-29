@@ -201,7 +201,6 @@ public class ExpenseService {
                     .amount(splitRequest.getAmount())
                     .percentage(percentage)
                     .payer(isPayer)
-                    .settlementStatus(ExpenseSplit.SettlementStatus.PENDING)
                     .build();
 
             if (splitRequest.getParticipantId() != null) {
@@ -223,7 +222,6 @@ public class ExpenseService {
                     .amount(amount)
                     .percentage(splitRequest.getPercentage())
                     .payer(isPayer)
-                    .settlementStatus(ExpenseSplit.SettlementStatus.PENDING)
                     .build();
             if (splitRequest.getParticipantId() != null) {
                 GroupParticipant participant = groupParticipantRepository
@@ -268,7 +266,6 @@ public class ExpenseService {
                     .amount(equalAmount)
                     .percentage(BigDecimal.valueOf(100).divide(count, 2, RoundingMode.HALF_UP))
                     .payer(isPayer)
-                    .settlementStatus(ExpenseSplit.SettlementStatus.PENDING)
                     .build();
             expense.getSplits().add(split);
         }
@@ -415,13 +412,6 @@ public class ExpenseService {
         }
 
         split.setPayer(isPayer);
-
-        if (request.getSettlementStatus() != null) {
-            split.setSettlementStatus(request.getSettlementStatus());
-            if (request.getSettlementStatus() == ExpenseSplit.SettlementStatus.SETTLED) {
-                split.setSettledAt(LocalDateTime.now());
-            }
-        }
     }
 
     public void deleteExpense(Long expenseId) {

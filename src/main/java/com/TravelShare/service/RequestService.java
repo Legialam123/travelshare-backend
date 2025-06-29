@@ -165,6 +165,9 @@ public class RequestService {
         paymentRequest.setStatus("PENDING_CONFIRM");
         requestRepository.save(paymentRequest);
 
+        settlement.setSettlementMethod(Settlement.SettlementMethod.CASH);
+        settlementRepository.save(settlement);
+
         GroupParticipant from = participantRepository.findById(settlement.getToParticipant().getId())
                 .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
 

@@ -18,5 +18,4 @@ public class ExpenseSplitUpdateRequest {
     BigDecimal percentage;
     Integer shares;
     boolean payer;
-    ExpenseSplit.SettlementStatus settlementStatus;
 }
