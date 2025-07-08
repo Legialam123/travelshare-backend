@@ -18,7 +18,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -72,7 +71,6 @@ public class GroupService {
                         ? request.getCreatorName()
                         : currentUser.getFullName())
                 .role("ADMIN")
-                .status(GroupParticipant.InvitationStatus.ACTIVE)
                 .joinedAt(LocalDateTime.now())
                 .build();
 
@@ -107,29 +105,13 @@ public class GroupService {
         if (invitee.getEmail() != null && !invitee.getEmail().isEmpty()) {
             User user = userRepository.findByEmail(invitee.getEmail()).orElse(null);
             if (user != null) {
-                // Gán user luôn, ACTIVE
+                // Gán user luôn
                 participant.setUser(user);
-                participant.setStatus(GroupParticipant.InvitationStatus.ACTIVE);
                 participant.setJoinedAt(LocalDateTime.now());
             } else {
-                // Chưa có tài khoản, gửi mời
-                String token = UUID.randomUUID().toString();
-                participant.setInvitationToken(token);
-                participant.setInvitedAt(LocalDateTime.now());
-                participant.setStatus(GroupParticipant.InvitationStatus.PENDING);
-
-                // Gửi email mời đăng ký/tham gia nhóm
-                String inviteLink = invitationBaseUrl + "/invite?token=" + token;
-                emailService.sendInvitationEmail(invitee.getEmail(), group.getName(), inviteLink);
+                emailService.sendJoinCodeEmail(invitee.getEmail(), group.getName(), group.getJoinCode());
             }
-        } else {
-            // Không có email, chỉ tạo slot
-            String token = UUID.randomUUID().toString();
-            participant.setInvitationToken(token);
-            participant.setInvitedAt(LocalDateTime.now());
-            participant.setStatus(GroupParticipant.InvitationStatus.PENDING);
         }
-
         return groupParticipantRepository.save(participant);
     }
 
@@ -154,8 +136,7 @@ public class GroupService {
                 .map(p -> GroupParticipantResponse.builder()
                         .id(p.getId())
                         .name(p.getName())
-                        .user(p.getUser() != null ? UserSummaryResponse.from(p.getUser()) : null) // ✅ map đúng kiểu
-                        .status(p.getStatus())
+                        .user(p.getUser() != null ? UserSummaryResponse.from(p.getUser()) : null)
                         .role(p.getRole())
                         .joinedAt(p.getJoinedAt())
                         .build()
@@ -184,6 +165,13 @@ public class GroupService {
         return ApiResponse.builder().message("Bạn đã tham gia nhóm này rồi").build();
         }
 
+        // Lấy admin đầu tiên của nhóm để gửi request
+        User admin = group.getParticipants().stream()
+                .filter(p -> "ADMIN".equals(p.getRole()) && p.getUser() != null)
+                .map(GroupParticipant::getUser)
+                .findFirst()
+                .orElseThrow(() -> new AppException(ErrorCode.NO_ADMIN_FOUND));
+
         // Trường hợp người dùng chọn một participant đã có sẵn (chưa liên kết)
         if (request.getParticipantId() != null) {
             GroupParticipant participant = groupParticipantRepository.findById(request.getParticipantId())
@@ -193,10 +181,21 @@ public class GroupService {
                 throw new AppException(ErrorCode.PARTICIPANT_ALREADY_LINKED);
             }
 
-            participant.setUser(currentUser);
-            participant.setStatus(GroupParticipant.InvitationStatus.ACTIVE);
-            groupParticipantRepository.save(participant);
-            return ApiResponse.builder().message("Tham gia với tư cách thành viên có sẵn thành công").build();
+            // Tạo request JOIN_GROUP_REQUEST với referenceId = participantId
+            requestService.createRequest(
+                    RequestCreationRequest.builder()
+                            .type("JOIN_GROUP_REQUEST")
+                            .receiverId(admin.getId())
+                            .groupId(group.getId())
+                            .referenceId(participant.getId())
+                            .content(currentUser.getFullName() + " muốn tham gia nhóm với tư cách: " + participant.getName())
+                            .build(),
+                    currentUser
+            );
+
+            return ApiResponse.builder()
+                    .message("Đã gửi yêu cầu tham gia nhóm đến admin, chờ phê duyệt")
+                    .build();
         }
 
         // Trường hợp tạo participant mới
@@ -207,21 +206,28 @@ public class GroupService {
             return ApiResponse.builder().message("Tên đã tồn tại trong nhóm").build();
         }
 
-        GroupParticipant newParticipant = new GroupParticipant();
-        newParticipant.setGroup(group);
-        newParticipant.setUser(currentUser);
-        newParticipant.setName(request.getParticipantName() != null && !request.getParticipantName().isEmpty()
+        // Tạo request JOIN_GROUP_REQUEST với tên mới (referenceId = null)
+        String participantName = request.getParticipantName() != null && !request.getParticipantName().isEmpty()
                 ? request.getParticipantName()
-                : currentUser.getFullName());
-        newParticipant.setRole("MEMBER");
-        newParticipant.setStatus(GroupParticipant.InvitationStatus.ACTIVE);
+                : currentUser.getFullName();
 
-        groupParticipantRepository.save(newParticipant);
+        requestService.createRequest(
+                RequestCreationRequest.builder()
+                        .type("JOIN_GROUP_REQUEST")
+                        .receiverId(admin.getId())
+                        .groupId(group.getId())
+                        .referenceId(null) // Không có participant sẵn
+                        .content(null)
+                        .build(),
+                currentUser
+        );
 
-        return ApiResponse.builder().message("Đã tham gia nhóm thành công").build();
+        return ApiResponse.builder()
+                .message("Đã gửi yêu cầu tham gia nhóm đến admin, chờ phê duyệt")
+                .build();
     }
 
-    public void inviteParticipant(Long participantId, String email) {
+    public ApiResponse<?> inviteParticipant(Long participantId, String email) {
         GroupParticipant participant = groupParticipantRepository.findById(participantId)
                 .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
 
@@ -229,89 +235,54 @@ public class GroupService {
             throw new AppException(ErrorCode.PARTICIPANT_ALREADY_LINKED);
         }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AppException(ErrorCode.EMAIL_NOT_EXISTED));
+        Group group = participant.getGroup();
+        String joinCode = group.getJoinCode();
 
-        // Kiểm tra nếu user đã là thành viên nhóm
-        boolean alreadyInGroup = participant.getGroup().getParticipants().stream()
-                .anyMatch(p -> p.getUser() != null && p.getUser().getId().equals(user.getId()));
-        if (alreadyInGroup) {
-            throw new AppException(ErrorCode.USER_ALREADY_IN_GROUP);
+        // Lấy thông tin admin hiện tại
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User existingUser = userRepository.findByEmail(email).orElse(null);
+
+        if (existingUser != null) {
+            // TRƯỜNG HỢP 1: Email đã tồn tại → Tạo REQUEST system
+            boolean alreadyInGroup = group.getParticipants().stream()
+                    .anyMatch(p -> p.getUser() != null && p.getUser().getId().equals(existingUser.getId()));
+
+            if (alreadyInGroup) {
+                return ApiResponse.builder()
+                        .message("Người dùng đã tham gia nhóm này rồi")
+                        .build();
+            }
+
+            // Tạo request JOIN_GROUP_INVITE
+            requestService.createRequest(
+                    RequestCreationRequest.builder()
+                            .type("JOIN_GROUP_INVITE")
+                            .receiverId(existingUser.getId())
+                            .groupId(group.getId())
+                            .referenceId(participant.getId())
+                            .build(),
+                    currentUser
+            );
+
+            return ApiResponse.builder()
+                    .message("Đã gửi yêu cầu tham gia nhóm tới " + existingUser.getFullName() + ", chờ xác nhận")
+                    .build();
+        } else {
+            // TRƯỜNG HỢP 2: Email chưa tồn tại → Gửi JOIN CODE
+            // User chưa có tài khoản - gửi join code kèm hướng dẫn đăng ký
+            emailService.sendJoinCodeEmail(
+                    email,
+                    group.getName(),
+                    joinCode
+            );
+
+            return ApiResponse.builder()
+                    .message("Đã gửi mã tham gia (" + joinCode + ") tới email chưa đăng ký: " + email)
+                    .build();
         }
-
-        // Lấy admin hiện tại (người thực hiện thao tác)
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        // Tạo request JOIN_GROUP_INVITE (status PENDING)
-        requestService.createRequest(
-                RequestCreationRequest.builder()
-                        .type("JOIN_GROUP_INVITE")
-                        .receiverId(user.getId())
-                        .groupId(participant.getGroup().getId())
-                        .referenceId(participant.getId())
-                        .build(),
-                currentUser
-        );
-    }
-
-    public InvitationLinkResponse createInvitation(Long groupId, GroupInvitationRequest request) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));
-
-        // Generate unique token for this invitation
-        String token = UUID.randomUUID().toString();
-
-        GroupParticipant participant = GroupParticipant.builder()
-                .group(group)
-                .name(request.getName())
-                .role(request.getRole() != null ? request.getRole() : "MEMBER")
-                .invitationToken(token)
-                .invitedAt(LocalDateTime.now())
-                .status(GroupParticipant.InvitationStatus.PENDING)
-                .build();
-
-        groupParticipantRepository.save(participant);
-
-        String invitationLink = invitationBaseUrl + "/join/" + token;
-
-        return InvitationLinkResponse.builder()
-                .invitationToken(token)
-                .invitationLink(invitationLink)
-                .participantName(request.getName())
-                .build();
-    }
-
-    public GroupResponse acceptInvitation(String token) {
-        GroupParticipant participant = groupParticipantRepository.findByInvitationToken(token)
-                .orElseThrow(() -> new AppException(ErrorCode.INVITATION_NOT_FOUND));
-
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        // Just update the participant without deleting it
-        participant.setUser(currentUser);
-        participant.setStatus(GroupParticipant.InvitationStatus.ACTIVE);
-        participant.setJoinedAt(LocalDateTime.now());
-
-        participant = groupParticipantRepository.save(participant);
-
-        return groupMapper.toGroupResponse(participant.getGroup());
-    }
-
-    public List<InvitationLinkResponse> getGroupInvitations(Long groupId) {
-        List<GroupParticipant> pendingParticipants = groupParticipantRepository
-                .findByGroupIdAndStatus(groupId, GroupParticipant.InvitationStatus.PENDING);
-
-        return pendingParticipants.stream()
-                .map(p -> InvitationLinkResponse.builder()
-                        .invitationToken(p.getInvitationToken())
-                        .invitationLink(invitationBaseUrl + "/join/" + p.getInvitationToken())
-                        .participantName(p.getName())
-                        .build())
-                .collect(Collectors.toList());
     }
 
     public GroupResponse getGroup(Long groupId) {
@@ -385,7 +356,6 @@ public class GroupService {
                 .group(group)
                 .name(request.getName())
                 .role(request.getRole())
-                .status(GroupParticipant.InvitationStatus.PENDING)
                 .build();
 
         if (request.getEmail() != null && !request.getEmail().isEmpty()) {
@@ -417,31 +387,18 @@ public class GroupService {
                         .message("Đã gửi lời mời tham gia nhóm, chờ xác nhận từ người dùng")
                         .build();
             } else {
-                // Chưa có tài khoản
-                String token = UUID.randomUUID().toString();
-                participant.setInvitationToken(token);
-                participant.setInvitedAt(LocalDateTime.now());
                 groupParticipantRepository.save(participant);
 
-                // Gửi email mời đăng ký/tham gia nhóm
-                String inviteLink = invitationBaseUrl + "/invite?token=" + token;
-                emailService.sendInvitationEmail(request.getEmail(), group.getName(), inviteLink);
+                emailService.sendJoinCodeEmail(request.getEmail(), group.getName(), group.getJoinCode());
 
                 return ApiResponse.builder()
                         .message("Đã gửi email mời tham gia nhóm tới " + request.getEmail())
                         .build();
             }
         } else {
-            // Không nhập email, chỉ tạo participant "slot"
-            String token = UUID.randomUUID().toString();
-            participant.setInvitationToken(token);
-            participant.setInvitedAt(LocalDateTime.now());
             groupParticipantRepository.save(participant);
-
-            // Có thể trả về link mời cho admin copy gửi cho ai đó
-            String inviteLink = "https://your-app.com/invite?token=" + token;
             return ApiResponse.builder()
-                    .message("Đã tạo slot thành viên, link mời: " + inviteLink)
+                    .message("Đã tạo slot thành viên" + (request.getName() != null ? " với tên: " + request.getName() : ""))
                     .build();
         }
     }
@@ -466,10 +423,7 @@ public class GroupService {
                 .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
 
         participant.setUser(null);
-        participant.setStatus(GroupParticipant.InvitationStatus.PENDING);
-        participant.setInvitationToken(null);
         participant.setJoinedAt(null);
-        participant.setInvitedAt(null);
         groupParticipantRepository.save(participant);
     }
 
@@ -488,10 +442,7 @@ public class GroupService {
         }
 
         participant.setUser(null);
-        participant.setStatus(GroupParticipant.InvitationStatus.PENDING);
-        participant.setInvitationToken(null);
         participant.setJoinedAt(null);
-        participant.setInvitedAt(null);
         groupParticipantRepository.save(participant);
     }
 

@@ -7,7 +7,6 @@ import com.TravelShare.dto.response.SettlementResponse;
 import com.TravelShare.entity.Settlement;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
-import com.TravelShare.repository.RequestRepository;
 import com.TravelShare.repository.SettlementRepository;
 import com.TravelShare.service.RequestService;
 import com.TravelShare.service.SettlementService;

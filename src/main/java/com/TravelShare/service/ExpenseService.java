@@ -4,6 +4,7 @@ import com.TravelShare.dto.request.ExpenseCreationRequest;
 import com.TravelShare.dto.request.ExpenseSplitCreationRequest;
 import com.TravelShare.dto.request.ExpenseSplitUpdateRequest;
 import com.TravelShare.dto.request.ExpenseUpdateRequest;
+import com.TravelShare.dto.response.CurrencyConversionResponse;
 import com.TravelShare.dto.response.ExpenseResponse;
 import com.TravelShare.dto.response.UserExpenseSummaryResponse;
 import com.TravelShare.entity.*;
@@ -25,7 +26,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -47,6 +47,7 @@ public class ExpenseService {
     GroupParticipantRepository groupParticipantRepository;
     MediaRepository mediaRepository;
     ApplicationEventPublisher eventPublisher;
+    ExchangeRateService exchangeRateService;
 
     public ExpenseResponse getExpense(Long expenseId) {
         return expenseMapper.toExpenseResponse(expenseRepository
@@ -153,6 +154,33 @@ public class ExpenseService {
         expense.setCreatedAt(LocalDateTime.now());
         expense.setCreatedBy(user);
 
+        if (!expense.getCurrency().equals(expense.getGroup().getDefaultCurrency())) {
+            try {
+                CurrencyConversionResponse conversionResponse = exchangeRateService.convertAmount(
+                        expense.getAmount(),
+                        expense.getCurrency().getCode(),
+                        expense.getGroup().getDefaultCurrency().getCode()
+                );
+
+                //Kiểm tra conversion thành công
+                if (conversionResponse.isSuccess()) {
+                    expense.setExchangeRate(conversionResponse.getExchangeRate());
+                    expense.setOriginalAmount(expense.getAmount().setScale(2, RoundingMode.HALF_UP));
+                    expense.setAmount(conversionResponse.getConvertedAmount().setScale(2, RoundingMode.HALF_UP));
+                } else {
+                    // Fallback: không convert, log warning
+                    log.warn("Currency conversion failed: {}", conversionResponse.getErrorMessage());
+                    expense.setOriginalAmount(expense.getAmount().setScale(2, RoundingMode.HALF_UP));
+                    expense.setExchangeRate(BigDecimal.ONE);
+                }
+            } catch (Exception e) {
+                log.error("Currency conversion error: {}", e.getMessage());
+                // Fallback: không convert
+                expense.setOriginalAmount(expense.getAmount().setScale(2, RoundingMode.HALF_UP));
+                expense.setExchangeRate(BigDecimal.ONE);
+            }
+        }
+
         switch (request.getSplitType()) {
             case EQUAL:
                 log.info("Expense equal: ");
@@ -169,21 +197,6 @@ public class ExpenseService {
             default:
                 throw new AppException(ErrorCode.INVALID_SPLIT_TYPE);
         }
-
-        /*
-        if (expense.getSplits() != null) {
-            int index = 1;
-            for (ExpenseSplit split : expense.getSplits()) {
-                log.info("   🔸 Split #{} - participantId: {}, amount: {}, percentage: {}, isPayer: {}, expenseRef: {}",
-                        index++,
-                        split.getParticipant() != null ? split.getParticipant().getId() : "null",
-                        split.getAmount(),
-                        split.getPercentage(),
-                        split.isPayer(),
-                        split.getExpense() != null ? "✅" : "❌"
-                );
-            }
-        }*/
 
         expenseRepository.save(expense);
 

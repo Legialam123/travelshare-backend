@@ -4,14 +4,12 @@ import com.TravelShare.dto.request.*;
 import com.TravelShare.dto.response.ApiResponse;
 import com.TravelShare.dto.response.AuthenticationResponse;
 import com.TravelShare.dto.response.IntrospectResponse;
-import com.TravelShare.repository.UserRepository;
 import com.TravelShare.service.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;

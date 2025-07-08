@@ -1,15 +1,7 @@
 package com.TravelShare.dto.request;
 
-import com.TravelShare.entity.Group;
-import com.TravelShare.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor

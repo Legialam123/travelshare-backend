@@ -1,9 +1,7 @@
 package com.TravelShare.mapper;
 
 import com.TravelShare.dto.response.MediaResponse;
-import com.TravelShare.dto.response.UserResponse;
 import com.TravelShare.entity.Media;
-import com.TravelShare.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

@@ -1,6 +1,5 @@
 package com.TravelShare.configuration;
 
-import com.TravelShare.dto.request.CategoryCreationRequest;
 import com.TravelShare.dto.request.CurrencyCreationRequest;
 import com.TravelShare.entity.Category;
 import com.TravelShare.entity.User;
@@ -8,7 +7,6 @@ import com.TravelShare.repository.CurrencyRepository;
 import com.TravelShare.repository.CategoryRepository;
 import com.TravelShare.repository.UserRepository;
 import com.TravelShare.service.CurrencyService;
-import com.TravelShare.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -96,19 +95,70 @@ public class DatabaseInitializer implements CommandLineRunner {
     }
 
     private void initCurrencies() {
-        // Define common currencies
-        Map<String, String[]> currencies = Map.of(
-                "USD", new String[]{"US Dollar", "$"},
-                "EUR", new String[]{"Euro", "€"},
-                "GBP", new String[]{"British Pound", "£"},
-                "JPY", new String[]{"Japanese Yen", "¥"},
-                "VND", new String[]{"Vietnamese Dong", "₫"},
-                "CNY", new String[]{"Chinese Yuan", "¥"},
-                "AUD", new String[]{"Australian Dollar", "A$"},
-                "CAD", new String[]{"Canadian Dollar", "C$"}
-        );
+        Map<String, String[]> currencies = new HashMap<>();
 
-        log.info("Initializing currencies");
+        // Major currencies
+        currencies.put("USD", new String[]{"US Dollar", "$"});
+        currencies.put("EUR", new String[]{"Euro", "€"});
+        currencies.put("GBP", new String[]{"British Pound", "£"});
+        currencies.put("JPY", new String[]{"Japanese Yen", "¥"});
+        currencies.put("VND", new String[]{"Vietnamese Dong", "₫"});
+        currencies.put("CNY", new String[]{"Chinese Yuan", "¥"});
+        currencies.put("AUD", new String[]{"Australian Dollar", "A$"});
+        currencies.put("CAD", new String[]{"Canadian Dollar", "C$"});
+
+        // Southeast Asia
+        currencies.put("THB", new String[]{"Thai Baht", "฿"});
+        currencies.put("SGD", new String[]{"Singapore Dollar", "S$"});
+        currencies.put("MYR", new String[]{"Malaysian Ringgit", "RM"});
+        currencies.put("IDR", new String[]{"Indonesian Rupiah", "Rp"});
+        currencies.put("PHP", new String[]{"Philippine Peso", "₱"});
+
+        // East Asia
+        currencies.put("KRW", new String[]{"South Korean Won", "₩"});
+        currencies.put("HKD", new String[]{"Hong Kong Dollar", "HK$"});
+        currencies.put("TWD", new String[]{"Taiwan Dollar", "NT$"});
+
+        // South Asia
+        currencies.put("INR", new String[]{"Indian Rupee", "₹"});
+        currencies.put("PKR", new String[]{"Pakistani Rupee", "₨"});
+        currencies.put("LKR", new String[]{"Sri Lankan Rupee", "Rs"});
+        currencies.put("BDT", new String[]{"Bangladeshi Taka", "৳"});
+
+        // Middle East
+        currencies.put("AED", new String[]{"UAE Dirham", "د.إ"});
+        currencies.put("SAR", new String[]{"Saudi Riyal", "﷼"});
+        currencies.put("QAR", new String[]{"Qatari Riyal", "ر.ق"});
+        currencies.put("KWD", new String[]{"Kuwaiti Dinar", "د.ك"});
+
+        // Europe
+        currencies.put("CHF", new String[]{"Swiss Franc", "CHF"});
+        currencies.put("NOK", new String[]{"Norwegian Krone", "kr"});
+        currencies.put("SEK", new String[]{"Swedish Krona", "kr"});
+        currencies.put("DKK", new String[]{"Danish Krone", "kr"});
+        currencies.put("PLN", new String[]{"Polish Zloty", "zł"});
+        currencies.put("CZK", new String[]{"Czech Koruna", "Kč"});
+        currencies.put("HUF", new String[]{"Hungarian Forint", "Ft"});
+        currencies.put("RUB", new String[]{"Russian Ruble", "₽"});
+
+        // Americas
+        currencies.put("BRL", new String[]{"Brazilian Real", "R$"});
+        currencies.put("MXN", new String[]{"Mexican Peso", "$"});
+        currencies.put("ARS", new String[]{"Argentine Peso", "$"});
+        currencies.put("CLP", new String[]{"Chilean Peso", "$"});
+        currencies.put("COP", new String[]{"Colombian Peso", "$"});
+        currencies.put("PEN", new String[]{"Peruvian Sol", "S/"});
+
+        // Africa & Oceania
+        currencies.put("ZAR", new String[]{"South African Rand", "R"});
+        currencies.put("EGP", new String[]{"Egyptian Pound", "£"});
+        currencies.put("NGN", new String[]{"Nigerian Naira", "₦"});
+        currencies.put("KES", new String[]{"Kenyan Shilling", "Sh"});
+        currencies.put("MAD", new String[]{"Moroccan Dirham", "د.م."});
+        currencies.put("NZD", new String[]{"New Zealand Dollar", "NZ$"});
+        currencies.put("FJD", new String[]{"Fijian Dollar", "FJ$"});
+
+        log.info("Initializing {} currencies", currencies.size());
         for (Map.Entry<String, String[]> entry : currencies.entrySet()) {
             String code = entry.getKey();
             String[] details = entry.getValue();
@@ -130,7 +180,6 @@ public class DatabaseInitializer implements CommandLineRunner {
             }
         }
     }
-
     private void initCategories() {
         // Danh mục cho GROUP
         initCategoryIfNotExists("Du lịch & Khám phá", "Cho các chuyến du lịch, phiêu lưu", 

@@ -1,7 +1,5 @@
 package com.TravelShare.dto.response;
 
-import com.TravelShare.entity.Group;
-import com.TravelShare.entity.User;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

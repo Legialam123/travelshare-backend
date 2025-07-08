@@ -22,6 +22,10 @@ public class ExpenseResponse {
 
     BigDecimal amount;
 
+    BigDecimal originalAmount;
+
+    BigDecimal exchangeRate;
+
     CurrencyResponse currency;
 
     GroupResponse group;
@@ -39,8 +43,5 @@ public class ExpenseResponse {
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 
-    // Summary information
-    BigDecimal totalSettled;
-    BigDecimal totalPending;
     int participantCount;
 }

@@ -2,10 +2,8 @@ package com.TravelShare.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @Data
 @NoArgsConstructor

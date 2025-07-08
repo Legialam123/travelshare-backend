@@ -1,7 +1,6 @@
 package com.TravelShare.listener;
 
 import com.TravelShare.dto.request.NotificationCreationRequest;
-import com.TravelShare.event.GroupUpdatedEvent;
 import com.TravelShare.event.MediaUploadedEvent;
 import com.TravelShare.service.NotificationService;
 import lombok.AccessLevel;

@@ -4,7 +4,6 @@ import com.TravelShare.dto.request.CategoryCreationRequest;
 import com.TravelShare.dto.request.CategoryUpdateRequest;
 import com.TravelShare.dto.response.ApiResponse;
 import com.TravelShare.dto.response.CategoryResponse;
-import com.TravelShare.entity.Category;
 import com.TravelShare.service.CategoryService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

@@ -30,20 +30,10 @@ public class GroupParticipant {
     // Fields for temporary users
     @Column(nullable = false)
     String name;
-    
-    String invitationToken;
-    LocalDateTime invitedAt;
 
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    InvitationStatus status = InvitationStatus.PENDING;
 
     @Column(nullable = false)
     String role;
 
     LocalDateTime joinedAt;
-
-    public enum InvitationStatus {
-        PENDING, ACTIVE, DECLINED
-    }
 } 

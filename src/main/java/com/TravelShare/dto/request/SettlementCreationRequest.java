@@ -2,10 +2,8 @@ package com.TravelShare.dto.request;
 
 import com.TravelShare.entity.Settlement;
 import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
 import java.math.BigDecimal;
 
 @Data

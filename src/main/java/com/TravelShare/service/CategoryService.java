@@ -5,14 +5,12 @@ import com.TravelShare.dto.request.CategoryUpdateRequest;
 import com.TravelShare.dto.response.CategoryResponse;
 import com.TravelShare.entity.Category;
 import com.TravelShare.entity.Group;
-import com.TravelShare.entity.GroupParticipant;
 import com.TravelShare.entity.User;
 import com.TravelShare.event.CategoryExpenseCreatedEvent;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.CategoryMapper;
 import com.TravelShare.repository.CategoryRepository;
-import com.TravelShare.repository.GroupParticipantRepository;
 import com.TravelShare.repository.GroupRepository;
 import com.TravelShare.repository.UserRepository;
 import lombok.AccessLevel;
@@ -22,8 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -35,7 +31,6 @@ public class CategoryService {
     CategoryMapper categoryMapper;
     GroupRepository groupRepository;
     UserRepository userRepository;
-    GroupParticipantRepository groupParticipantRepository;
     ApplicationEventPublisher eventPublisher;
 
     /**
@@ -111,9 +106,10 @@ public class CategoryService {
         String userId = currentUser.getId();
         log.info("User ID: {}", userId);
         
-        // Kiểm tra user có trong group không
+        /*Kiểm tra user có trong group không
         GroupParticipant participant = groupParticipantRepository.findByGroupIdAndUserId(groupId, userId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_GROUP_MEMBER));
+        */
         
         // Kiểm tra group tồn tại
         Group group = groupRepository.findById(groupId)

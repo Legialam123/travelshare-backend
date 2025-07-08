@@ -6,28 +6,20 @@ import com.TravelShare.dto.response.ApiResponse;
 import com.TravelShare.dto.response.BalanceResponse;
 import com.TravelShare.dto.response.SettlementResponse;
 import com.TravelShare.entity.Group;
-import com.TravelShare.entity.Settlement;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.repository.GroupRepository;
-import com.TravelShare.repository.SettlementRepository;
 import com.TravelShare.service.SettlementService;
-import com.TravelShare.service.VnPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 

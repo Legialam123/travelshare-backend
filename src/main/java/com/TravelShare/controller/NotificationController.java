@@ -3,7 +3,6 @@ package com.TravelShare.controller;
 import com.TravelShare.dto.request.NotificationCreationRequest;
 import com.TravelShare.dto.response.ApiResponse;
 import com.TravelShare.dto.response.NotificationResponse;
-import com.TravelShare.entity.Notification;
 import com.TravelShare.entity.User;
 import com.TravelShare.exception.AppException;
 import com.TravelShare.exception.ErrorCode;

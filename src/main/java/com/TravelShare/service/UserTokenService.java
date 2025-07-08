@@ -1,6 +1,5 @@
 package com.TravelShare.service;
 
-import com.TravelShare.dto.request.ResetPasswordRequest;
 import com.TravelShare.entity.User;
 import com.TravelShare.entity.UserToken;
 import com.TravelShare.exception.AppException;
@@ -13,11 +12,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.UUID;
-
 import static java.time.LocalDateTime.now;
 
 @Service

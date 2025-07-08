@@ -76,35 +76,9 @@ public class GroupController {
                 .build();
     }
 
-    @PostMapping("/{groupId}/invite")
-    public ApiResponse<InvitationLinkResponse> inviteToGroup(
-            @PathVariable Long groupId,
-            @RequestBody @Valid GroupInvitationRequest request) {
-        return ApiResponse.<InvitationLinkResponse>builder()
-                .result(groupService.createInvitation(groupId, request))
-                .build();
-    }
-
-    @GetMapping("/{groupId}/invitations")
-    public ApiResponse<List<InvitationLinkResponse>> getGroupInvitations(@PathVariable Long groupId) {
-        return ApiResponse.<List<InvitationLinkResponse>>builder()
-                .result(groupService.getGroupInvitations(groupId))
-                .build();
-    }
-
-    @PostMapping("/invite/accept/{token}")
-    public ApiResponse<GroupResponse> acceptInvitation(@PathVariable String token) {
-        return ApiResponse.<GroupResponse>builder()
-                .result(groupService.acceptInvitation(token))
-                .build();
-    }
-
     @PostMapping("/invite")
     public ApiResponse<?> inviteParticipant(@RequestBody InviteParticipantRequest request) {
-        groupService.inviteParticipant(request.getParticipantId(), request.getEmail());
-        return ApiResponse.builder()
-                .message("✅ Đã mời thành viên thành công")
-                .build();
+        return groupService.inviteParticipant(request.getParticipantId(), request.getEmail());
     }
 
     @GetMapping

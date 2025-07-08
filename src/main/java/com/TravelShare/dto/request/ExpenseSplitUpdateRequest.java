@@ -1,11 +1,8 @@
 package com.TravelShare.dto.request;
 
-import com.TravelShare.entity.ExpenseSplit;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
 import java.math.BigDecimal;
-import java.util.List;
 
 @Data
 @NoArgsConstructor

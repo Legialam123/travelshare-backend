@@ -65,8 +65,8 @@ public enum ErrorCode {
     REQUEST_ALREADY_HANDLED(1055, "Yêu cầu đã được xử lý", HttpStatus.BAD_REQUEST),
     PARTICIPANT_NOT_IN_GROUP(1056, "Người dùng này không tồn tại trong Group", HttpStatus.BAD_REQUEST),
     ALREADY_INVITED(1057, "Đã gửi lời mời", HttpStatus.BAD_REQUEST),
-    TOKEN_NOT_EXISTED(1031, "Token của bạn không tồn tại trong hệ thống", HttpStatus.NOT_FOUND);
-
+    TOKEN_NOT_EXISTED(1031, "Token của bạn không tồn tại trong hệ thống", HttpStatus.NOT_FOUND),
+    NO_ADMIN_FOUND(1032, "Không tìm thấy admin", HttpStatus.NOT_FOUND);
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;
         this.message = message;

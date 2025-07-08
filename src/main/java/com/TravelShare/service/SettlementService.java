@@ -35,7 +35,6 @@ public class SettlementService {
     CurrencyRepository currencyRepository;
     ExpenseRepository expenseRepository;
     UserRepository    userRepository;
-    RequestRepository requestRepository;
     RequestService requestService;
 
     public List<SettlementResponse> suggestSettlements(Long tripId) {

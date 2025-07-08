@@ -30,6 +30,12 @@ public class Expense {
     @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal amount;
 
+    @Column(precision = 12, scale = 2)
+    BigDecimal originalAmount;
+
+    @Column(precision = 15, scale = 6)
+    BigDecimal exchangeRate;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "currency_code", nullable = false)
     Currency currency;

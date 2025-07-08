@@ -8,8 +8,6 @@ import com.TravelShare.entity.ExpenseSplit;
 import com.TravelShare.dto.response.ExpenseSplitResponse;
 import org.mapstruct.*;
 
-import java.math.BigDecimal;
-
 @Mapper(componentModel = "spring")
 public interface ExpenseMapper {
     @Mapping(target = "currency", ignore = true)

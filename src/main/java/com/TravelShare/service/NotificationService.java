@@ -10,21 +10,15 @@ import com.TravelShare.exception.ErrorCode;
 import com.TravelShare.mapper.NotificationMapper;
 import com.TravelShare.repository.GroupRepository;
 import com.TravelShare.repository.NotificationRepository;
-import com.TravelShare.repository.UserRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,7 +30,6 @@ public class NotificationService {
     final NotificationRepository notificationRepository;
     final NotificationMapper notificationMapper;
     final GroupRepository groupRepository;
-    final UserRepository userRepository;
 
     public NotificationResponse createNotification(NotificationCreationRequest request, User creator) {
         Group group = groupRepository.findById(request.getGroupId())

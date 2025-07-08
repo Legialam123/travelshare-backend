@@ -1,7 +1,6 @@
 package com.TravelShare.event;
 
 import com.TravelShare.entity.Category;
-import com.TravelShare.entity.Expense;
 import com.TravelShare.entity.User;
 import lombok.AccessLevel;
 import lombok.Getter;

@@ -12,9 +12,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -89,7 +87,6 @@ public class RequestService {
                     .findById(req.getReferenceId())
                     .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
             participant.setUser(receiver);
-            participant.setStatus(GroupParticipant.InvitationStatus.ACTIVE);
             participant.setJoinedAt(LocalDateTime.now());
             groupParticipantRepository.save(participant);
 
@@ -103,6 +100,43 @@ public class RequestService {
                     receiver
             );
         }
+
+        if ("JOIN_GROUP_REQUEST".equals(req.getType())) {
+            if (req.getReferenceId() != null) {
+                // TRƯỜNG HỢP 1: Chọn participant có sẵn
+                GroupParticipant participant = groupParticipantRepository
+                        .findById(req.getReferenceId())
+                        .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
+
+                if (participant.getUser() != null) {
+                    throw new AppException(ErrorCode.PARTICIPANT_ALREADY_LINKED);
+                }
+
+                participant.setUser(req.getSender());
+                participant.setJoinedAt(LocalDateTime.now());
+                groupParticipantRepository.save(participant);
+            } else {
+                // TRƯỜNG HỢP 2: Tạo participant mới
+                // Parse tên từ content (định dạng: "UserName muốn tham gia nhóm với tên: ParticipantName")
+                String content = req.getContent();
+                String participantName = req.getSender().getFullName(); // default
+
+                if (content != null && content.contains("với tên: ")) {
+                    participantName = content.substring(content.lastIndexOf("với tên: ") + 9);
+                }
+
+                GroupParticipant newParticipant = GroupParticipant.builder()
+                        .group(req.getGroup())
+                        .user(req.getSender())
+                        .name(participantName)
+                        .role("MEMBER")
+                        .joinedAt(LocalDateTime.now())
+                        .build();
+
+                groupParticipantRepository.save(newParticipant);
+            }
+        }
+
         if ("PAYMENT_CONFIRM".equals(req.getType())) {
             // Tìm PAYMENT_REQUEST gốc theo settlementId
             Optional<Request> paymentRequestOpt = requestRepository
@@ -121,28 +155,6 @@ public class RequestService {
                 requestRepository.save(paymentRequestOpt.get());
             }
         }
-        /*
-        if ("PAYMENT_CONFIRM".equals(req.getType())) {
-            Optional<Request> paymentRequestOpt = requestRepository
-                    .findByReferenceIdAndType(req.getReferenceId(), "PAYMENT_REQUEST");
-            if(paymentRequestOpt.isPresent()) {
-                Settlement settlement = settlementRepository.findById(paymentRequestOpt.get().getReferenceId())
-                        .orElseThrow(() -> new AppException(ErrorCode.SETTLEMENT_NOT_FOUND));
-                settlement.setStatus(Settlement.SettlementStatus.COMPLETED);
-                settlement.setSettledAt(LocalDateTime.now());
-                settlementRepository.save(settlement);
-
-                paymentRequestOpt.get().setStatus("ACCEPTED");
-                requestRepository.save(paymentRequestOpt.get());
-            }
-            else {
-                Settlement settlement = settlementRepository.findById(req.getReferenceId())
-                        .orElseThrow(() -> new AppException(ErrorCode.SETTLEMENT_NOT_FOUND));
-                settlement.setStatus(Settlement.SettlementStatus.COMPLETED);
-                settlement.setSettledAt(LocalDateTime.now());
-                settlementRepository.save(settlement);
-            }
-        }*/
         return requestMapper.toRequestResponse(req);
     }
 
@@ -201,7 +213,7 @@ public class RequestService {
 
         if ("JOIN_GROUP_INVITE".equals(req.getType())) {
             GroupParticipant participant = groupParticipantRepository
-                    .findByGroupAndUserAndStatus(req.getGroup(), receiver, GroupParticipant.InvitationStatus.PENDING)
+                    .findByGroupAndUser(req.getGroup(), receiver)
                     .orElse(null);
             if (participant != null) {
                 participant.setUser(null);
@@ -209,7 +221,11 @@ public class RequestService {
             }
         }
 
-        if ("PAYMENT_CONFIRM".equals(req.getType())) {
+        if ("JOIN_GROUP_REQUEST".equals(req.getType())) {
+            //Đã update status request declined ở trên
+        }
+
+            if ("PAYMENT_CONFIRM".equals(req.getType())) {
             Settlement settlement = settlementRepository.findById(req.getReferenceId())
                     .orElseThrow(() -> new AppException(ErrorCode.SETTLEMENT_NOT_FOUND));
             settlement.setStatus(Settlement.SettlementStatus.FAILED);
@@ -251,6 +267,10 @@ public class RequestService {
                 return isSender
                         ? "Bạn đã gửi yêu cầu mời " + receiverName + " vào nhóm " + groupName
                         : "Bạn được mời vào nhóm " + groupName;
+            case "JOIN_GROUP_REQUEST":
+                return isSender
+                        ? "Bạn đã gửi yêu cầu tham gia nhóm " + groupName
+                        : senderName + " muốn tham gia nhóm " + groupName;
             case "PAYMENT_REQUEST":
                 return isSender
                         ? "Bạn đã gửi yêu cầu thanh toán " + amount + " cho " + receiverName
@@ -264,6 +284,7 @@ public class RequestService {
                 return "Yêu cầu mới";
         }
     }
+
     public RequestResponse toRequestResponseWithContent(Request request, User currentUser) {
         RequestResponse response = requestMapper.toRequestResponse(request);
         response.setContent(buildRequestContent(request, currentUser));

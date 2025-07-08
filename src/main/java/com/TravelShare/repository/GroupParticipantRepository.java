@@ -4,10 +4,8 @@ import com.TravelShare.entity.Group;
 import com.TravelShare.entity.GroupParticipant;
 import com.TravelShare.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 public interface GroupParticipantRepository extends JpaRepository<GroupParticipant, Long> {
     List<GroupParticipant> findByGroupId(Long groupId);
@@ -18,8 +16,4 @@ public interface GroupParticipantRepository extends JpaRepository<GroupParticipa
     Optional<GroupParticipant> findByName(String participantName);
     int countByGroupIdAndRole(Long groupId, String role);
     Optional<GroupParticipant> findByGroupIdAndUserId(Long groupId, String userId);
-    Optional<GroupParticipant> findByInvitationToken(String token);
-    List<GroupParticipant> findByGroupIdAndStatus(Long groupId, GroupParticipant.InvitationStatus status);
-    Optional<GroupParticipant> findByGroupAndUserAndStatus(Group group, User user, GroupParticipant.InvitationStatus status);
-    Optional<GroupParticipant> findByGroupIdAndNameAndStatus(Long groupId, String name, GroupParticipant.InvitationStatus status);
 } 

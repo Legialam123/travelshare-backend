@@ -12,11 +12,8 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class GroupParticipantResponse {
     Long id;
-
     String name;
     UserSummaryResponse user;
-    GroupParticipant.InvitationStatus status;
-
     String role;
     LocalDateTime joinedAt;
 }

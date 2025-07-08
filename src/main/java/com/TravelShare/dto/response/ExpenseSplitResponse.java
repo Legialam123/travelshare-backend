@@ -1,6 +1,5 @@
 package com.TravelShare.dto.response;
 
-import com.TravelShare.entity.ExpenseSplit;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.math.BigDecimal;
