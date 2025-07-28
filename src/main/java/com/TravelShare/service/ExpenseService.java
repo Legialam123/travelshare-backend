@@ -105,15 +105,28 @@ public class ExpenseService {
         Specification<Expense> spec = expenseFilterSpec(userId, startDate, endDate, groupId, categoryId);
         List<Expense> expenses = expenseRepository.findAll(spec);
 
+        // Calculate multi-currency totals by original currency (what user actually spent)
+        Map<String, BigDecimal> totalsByOriginalCurrency = expenses.stream()
+                .collect(Collectors.groupingBy(
+                        expense -> expense.getOriginalCurrency().getCode(),
+                        Collectors.reducing(
+                                BigDecimal.ZERO,
+                                Expense::getOriginalAmount,
+                                BigDecimal::add
+                        )
+                ));
+
+        // Calculate overall total using converted amounts (for meaningful comparison)
+        // This represents total spending in a unified currency base
         BigDecimal total = expenses.stream()
-                .map(Expense::getAmount)
+                .map(Expense::getConvertedAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         List<ExpenseResponse> expenseResponses = expenses.stream()
                 .map(expenseMapper::toExpenseResponse)
                 .collect(Collectors.toList());
 
-        return new UserExpenseSummaryResponse(total, expenseResponses);
+        return new UserExpenseSummaryResponse(total, totalsByOriginalCurrency, expenseResponses);
     }
 
     @Transactional
@@ -138,47 +151,64 @@ public class ExpenseService {
             expense.setSplits(new HashSet<>());
         }
 
-        Currency currency;
+        Currency originalCurrency;
         if (request.getCurrency() == null || request.getCurrency().isEmpty()) {
             // Use trip's default currency when not specified
-            currency = group.getDefaultCurrency();
+            originalCurrency = group.getDefaultCurrency();
         } else {
             // Use the currency specified in the request
-            currency = currencyRepository.findByCode(request.getCurrency())
+            originalCurrency = currencyRepository.findByCode(request.getCurrency())
                     .orElseThrow(() -> new AppException(ErrorCode.CURRENCY_NOT_EXISTED));
         }
-        expense.setCurrency(currency);
+
+        // Set currency fields
+        expense.setOriginalCurrency(originalCurrency);
+        expense.setConvertedCurrency(group.getDefaultCurrency());
         expense.setCategory(category);
         expense.setGroup(group);
         expense.setPayer(payer);
         expense.setCreatedAt(LocalDateTime.now());
         expense.setCreatedBy(user);
 
-        if (!expense.getCurrency().equals(expense.getGroup().getDefaultCurrency())) {
+        // Set original amount (what user actually spent)
+        expense.setOriginalAmount(request.getAmount().setScale(2, RoundingMode.HALF_UP));
+
+        // Handle currency conversion
+        if (!expense.getOriginalCurrency().equals(expense.getConvertedCurrency())) {
             try {
                 CurrencyConversionResponse conversionResponse = exchangeRateService.convertAmount(
-                        expense.getAmount(),
-                        expense.getCurrency().getCode(),
-                        expense.getGroup().getDefaultCurrency().getCode()
+                        expense.getOriginalAmount(),
+                        expense.getOriginalCurrency().getCode(),
+                        expense.getConvertedCurrency().getCode()
                 );
 
-                //Kiểm tra conversion thành công
+                // Check if conversion was successful
                 if (conversionResponse.isSuccess()) {
                     expense.setExchangeRate(conversionResponse.getExchangeRate());
-                    expense.setOriginalAmount(expense.getAmount().setScale(2, RoundingMode.HALF_UP));
-                    expense.setAmount(conversionResponse.getConvertedAmount().setScale(2, RoundingMode.HALF_UP));
+                    expense.setExchangeRateDate(LocalDateTime.now());
+                    expense.setConvertedAmount(conversionResponse.getConvertedAmount().setScale(2, RoundingMode.HALF_UP));
                 } else {
-                    // Fallback: không convert, log warning
+                    // Fallback: use original amount as converted amount
                     log.warn("Currency conversion failed: {}", conversionResponse.getErrorMessage());
-                    expense.setOriginalAmount(expense.getAmount().setScale(2, RoundingMode.HALF_UP));
+                    expense.setConvertedAmount(expense.getOriginalAmount());
                     expense.setExchangeRate(BigDecimal.ONE);
+                    expense.setExchangeRateDate(LocalDateTime.now());
+                    // Also update converted currency to match original
+                    expense.setConvertedCurrency(expense.getOriginalCurrency());
                 }
             } catch (Exception e) {
                 log.error("Currency conversion error: {}", e.getMessage());
-                // Fallback: không convert
-                expense.setOriginalAmount(expense.getAmount().setScale(2, RoundingMode.HALF_UP));
+                // Fallback: use original amount as converted amount
+                expense.setConvertedAmount(expense.getOriginalAmount());
                 expense.setExchangeRate(BigDecimal.ONE);
+                expense.setExchangeRateDate(LocalDateTime.now());
+                expense.setConvertedCurrency(expense.getOriginalCurrency());
             }
+        } else {
+            // Same currency, no conversion needed
+            expense.setConvertedAmount(expense.getOriginalAmount());
+            expense.setExchangeRate(BigDecimal.ONE);
+            expense.setExchangeRateDate(LocalDateTime.now());
         }
 
         switch (request.getSplitType()) {
@@ -205,8 +235,9 @@ public class ExpenseService {
     }
 
     private void createAmountSplits(Expense expense, Set<ExpenseSplitCreationRequest> splitRequests) {
+        // Use convertedAmount for splits to ensure fair sharing in group currency
         for (ExpenseSplitCreationRequest splitRequest : splitRequests) {
-            BigDecimal percentage = splitRequest.getAmount().divide(expense.getAmount(), 2, RoundingMode.HALF_UP)
+            BigDecimal percentage = splitRequest.getAmount().divide(expense.getConvertedAmount(), 2, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
             boolean isPayer = splitRequest.getParticipantId().equals(expense.getPayer().getId());
             ExpenseSplit split = ExpenseSplit.builder()
@@ -227,9 +258,10 @@ public class ExpenseService {
     }
 
     private void createPercentageSplits(Expense expense, Set<ExpenseSplitCreationRequest> splitRequests) {
+        // Use convertedAmount for splits to ensure fair sharing in group currency
         for (ExpenseSplitCreationRequest splitRequest : splitRequests) {
             boolean isPayer = splitRequest.getParticipantId().equals(expense.getPayer().getId());
-            BigDecimal amount = expense.getAmount().multiply(splitRequest.getPercentage()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP);
+            BigDecimal amount = expense.getConvertedAmount().multiply(splitRequest.getPercentage()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP);
             ExpenseSplit split = ExpenseSplit.builder()
                     .expense(expense)
                     .amount(amount)
@@ -246,31 +278,10 @@ public class ExpenseService {
         }
     }
 
-    /*
-    private void createSharesSplits(Expense expense, Set<ExpenseSplitCreationRequest> splitRequests) {
-        int totalShares = splitRequests.stream().mapToInt(ExpenseSplitCreationRequest::getShares).sum();
-        for (ExpenseSplitCreationRequest splitRequest : splitRequests) {
-            BigDecimal amount = expense.getAmount().multiply(BigDecimal.valueOf(splitRequest.getShares())).divide(BigDecimal.valueOf(totalShares), RoundingMode.HALF_UP);
-            ExpenseSplit split = ExpenseSplit.builder()
-                    .expense(expense)
-                    .amount(amount)
-                    .shares(splitRequest.getShares())
-                    .payer(splitRequest.isPayer())
-                    .settlementStatus(ExpenseSplit.SettlementStatus.PENDING)
-                    .build();
-            if (splitRequest.getParticipantId() != null) {
-                TripParticipant participant = tripParticipantRepository
-                        .findById(splitRequest.getParticipantId())
-                        .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
-                split.setParticipant(participant);
-            }
-            expense.getSplits().add(split);
-        }
-    }*/
-
     private void createEqualSplits(Expense expense, Group group) {
+        // Use convertedAmount for splits to ensure fair sharing in group currency
         BigDecimal count = BigDecimal.valueOf(group.getParticipants().size());
-        BigDecimal equalAmount = expense.getAmount().divide(count, 2, RoundingMode.HALF_UP);
+        BigDecimal equalAmount = expense.getConvertedAmount().divide(count, 2, RoundingMode.HALF_UP);
         for (GroupParticipant participant : group.getParticipants()) {
             boolean isPayer = participant.getId().equals(expense.getPayer().getId());
             ExpenseSplit split = ExpenseSplit.builder()
@@ -289,15 +300,27 @@ public class ExpenseService {
         Expense expense = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new AppException(ErrorCode.EXPENSE_NOT_EXISTED));
         expenseMapper.updateExpense(expense, request);
+
         if(request.getParticipantId() != null){
             GroupParticipant payer = groupParticipantRepository.findById(request.getParticipantId())
                     .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
             expense.setPayer(payer);
         }
+
         if (request.getCurrency() != null) {
-            Currency currency = currencyRepository.findByCode(request.getCurrency())
+            Currency originalCurrency = currencyRepository.findByCode(request.getCurrency())
                     .orElseThrow(() -> new AppException(ErrorCode.CURRENCY_NOT_EXISTED));
-            expense.setCurrency(currency);
+            expense.setOriginalCurrency(originalCurrency);
+
+            // Recalculate conversion if currency changed
+            if (request.getAmount() != null) {
+                expense.setOriginalAmount(request.getAmount().setScale(2, RoundingMode.HALF_UP));
+                recalculateCurrencyConversion(expense);
+            }
+        } else if (request.getAmount() != null) {
+            // Amount changed but currency stayed the same
+            expense.setOriginalAmount(request.getAmount().setScale(2, RoundingMode.HALF_UP));
+            recalculateCurrencyConversion(expense);
         }
 
         if (request.getCategory() != null) {
@@ -357,6 +380,43 @@ public class ExpenseService {
         return expenseMapper.toExpenseResponse(expenseSaved);
     }
 
+    private void recalculateCurrencyConversion(Expense expense) {
+        if (!expense.getOriginalCurrency().equals(expense.getGroup().getDefaultCurrency())) {
+            try {
+                CurrencyConversionResponse conversionResponse = exchangeRateService.convertAmount(
+                        expense.getOriginalAmount(),
+                        expense.getOriginalCurrency().getCode(),
+                        expense.getGroup().getDefaultCurrency().getCode()
+                );
+
+                if (conversionResponse.isSuccess()) {
+                    expense.setConvertedCurrency(expense.getGroup().getDefaultCurrency());
+                    expense.setExchangeRate(conversionResponse.getExchangeRate());
+                    expense.setExchangeRateDate(LocalDateTime.now());
+                    expense.setConvertedAmount(conversionResponse.getConvertedAmount().setScale(2, RoundingMode.HALF_UP));
+                } else {
+                    log.warn("Currency conversion failed during update: {}", conversionResponse.getErrorMessage());
+                    expense.setConvertedAmount(expense.getOriginalAmount());
+                    expense.setConvertedCurrency(expense.getOriginalCurrency());
+                    expense.setExchangeRate(BigDecimal.ONE);
+                    expense.setExchangeRateDate(LocalDateTime.now());
+                }
+            } catch (Exception e) {
+                log.error("Currency conversion error during update: {}", e.getMessage());
+                expense.setConvertedAmount(expense.getOriginalAmount());
+                expense.setConvertedCurrency(expense.getOriginalCurrency());
+                expense.setExchangeRate(BigDecimal.ONE);
+                expense.setExchangeRateDate(LocalDateTime.now());
+            }
+        } else {
+            // Same currency, no conversion needed
+            expense.setConvertedAmount(expense.getOriginalAmount());
+            expense.setConvertedCurrency(expense.getOriginalCurrency());
+            expense.setExchangeRate(BigDecimal.ONE);
+            expense.setExchangeRateDate(LocalDateTime.now());
+        }
+    }
+
     private void updateExpenseSplits(Expense expense, Set<ExpenseSplitUpdateRequest> splitRequests){
 
         // 1. Tạo danh sách splits hiện tại dạng Map<participantId, ExpenseSplit>
@@ -398,26 +458,27 @@ public class ExpenseService {
     }
 
     private void updateSplitFields(ExpenseSplit split, ExpenseSplitUpdateRequest request, Expense.SplitType splitType, boolean isPayer) {
+        // Use convertedAmount for split calculations to ensure fair sharing in group currency
         switch (splitType) {
             case EQUAL -> {
                 int totalParticipants = split.getExpense().getGroup().getParticipants().size();
-                split.setAmount(split.getExpense().getAmount()
+                split.setAmount(split.getExpense().getConvertedAmount()
                         .divide(BigDecimal.valueOf(totalParticipants), 2, RoundingMode.HALF_UP));
                 split.setPercentage(BigDecimal.valueOf(100)
                         .divide(BigDecimal.valueOf(totalParticipants), 2, RoundingMode.HALF_UP));
             }
             case AMOUNT -> {
                 split.setAmount(request.getAmount());
-                if (split.getExpense().getAmount().compareTo(BigDecimal.ZERO) > 0) {
+                if (split.getExpense().getConvertedAmount().compareTo(BigDecimal.ZERO) > 0) {
                     split.setPercentage(request.getAmount()
-                            .divide(split.getExpense().getAmount(), 4, RoundingMode.HALF_UP)
+                            .divide(split.getExpense().getConvertedAmount(), 4, RoundingMode.HALF_UP)
                             .multiply(BigDecimal.valueOf(100))
                             .setScale(2, RoundingMode.HALF_UP));
                 }
             }
             case PERCENTAGE -> {
                 split.setPercentage(request.getPercentage());
-                BigDecimal amount = split.getExpense().getAmount()
+                BigDecimal amount = split.getExpense().getConvertedAmount()
                         .multiply(request.getPercentage())
                         .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                 split.setAmount(amount);

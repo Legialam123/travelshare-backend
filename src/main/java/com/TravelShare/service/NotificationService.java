@@ -30,6 +30,7 @@ public class NotificationService {
     final NotificationRepository notificationRepository;
     final NotificationMapper notificationMapper;
     final GroupRepository groupRepository;
+    final WebSocketNotificationService webSocketNotificationService;
 
     public NotificationResponse createNotification(NotificationCreationRequest request, User creator) {
         Group group = groupRepository.findById(request.getGroupId())
@@ -43,6 +44,10 @@ public class NotificationService {
             Notification saved = notificationRepository.save(notification);
             log.info("Notification saved with id: {}", saved.getId());
             NotificationResponse response = notificationMapper.toNotificationResponse(saved);
+
+            // Gửi thông báo qua WebSocket
+            webSocketNotificationService.sendNotificationToGroup(group.getId(), response);
+
             log.info("NotificationResponse: {}", response);
             return response;
         } catch (Exception ex) {

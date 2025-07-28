@@ -45,6 +45,16 @@ public class RequestService {
         req.setStatus("PENDING");
 
         Request saved = requestRepository.save(req);
+
+        // --- Tạo notification cho user nhận ---
+        NotificationCreationRequest notiReq = NotificationCreationRequest.builder()
+                .type(request.getType())
+                .content(req.getContent() != null ? req.getContent() : "Bạn vừa nhận được một yêu cầu mới")
+                .groupId(group.getId())
+                .referenceId(saved.getId())
+                .build();
+        notificationService.createNotification(notiReq, sender);
+
         return requestMapper.toRequestResponse(saved);
     }
 
@@ -183,23 +193,22 @@ public class RequestService {
         GroupParticipant from = participantRepository.findById(settlement.getToParticipant().getId())
                 .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
 
+        GroupParticipant to = participantRepository.findById(settlement.getFromParticipant().getId())
+                .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
+
         String content = String.format(
-                "%s xác nhận đã thanh toán cho bạn trong nhóm %s, số tiền %s %s",
-                from.getName(), paymentRequest.getGroup().getName(), settlement.getAmount(), settlement.getCurrency().getCode()
+                "%s xác nhận đã thanh toán cho %s trong nhóm %s, số tiền %s %s",
+                from.getName(), to.getName(), paymentRequest.getGroup().getName(), settlement.getAmount(), settlement.getCurrency().getCode()
         );
         // 3. Tạo request PAYMENT_CONFIRM
-        Request confirmRequest = new Request();
+        RequestCreationRequest confirmRequest = new RequestCreationRequest();
         confirmRequest.setContent(content);
         confirmRequest.setType("PAYMENT_CONFIRM");
-        confirmRequest.setSender(paymentRequest.getReceiver());
-        confirmRequest.setReceiver(paymentRequest.getSender());
-        confirmRequest.setGroup(paymentRequest.getGroup());
+        confirmRequest.setReceiverId(paymentRequest.getSender().getId());
+        confirmRequest.setGroupId(paymentRequest.getGroup().getId());
         confirmRequest.setReferenceId(paymentRequest.getReferenceId());
-        confirmRequest.setStatus("PENDING");
 
-        requestRepository.save(confirmRequest);
-
-        return requestMapper.toRequestResponse(confirmRequest);
+        return createRequest(confirmRequest, user);
     }
 
     public RequestResponse declineRequest(Long requestId, User receiver) {

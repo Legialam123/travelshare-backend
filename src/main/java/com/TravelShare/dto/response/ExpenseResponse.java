@@ -20,14 +20,15 @@ public class ExpenseResponse {
 
     String description;
 
-    BigDecimal amount;
-
     BigDecimal originalAmount;
+    CurrencyResponse originalCurrency;
+
+    BigDecimal convertedAmount;
+    CurrencyResponse convertedCurrency;
 
     BigDecimal exchangeRate;
-
-    CurrencyResponse currency;
-
+    LocalDateTime exchangeRateDate;
+    boolean isMultiCurrency;
     GroupResponse group;
 
     GroupParticipantResponse payer;

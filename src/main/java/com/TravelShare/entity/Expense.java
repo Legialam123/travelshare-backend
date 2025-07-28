@@ -28,17 +28,24 @@ public class Expense {
     String description;
 
     @Column(nullable = false, precision = 12, scale = 2)
-    BigDecimal amount;
+    BigDecimal convertedAmount;
 
-    @Column(precision = 12, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     BigDecimal originalAmount;
 
     @Column(precision = 15, scale = 6)
     BigDecimal exchangeRate;
 
+    @Column
+    LocalDateTime exchangeRateDate;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "currency_code", nullable = false)
-    Currency currency;
+    @JoinColumn(name = "original_currency_code", nullable = false)
+    Currency originalCurrency;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "converted_currency_code", nullable = false)
+    Currency convertedCurrency;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id", nullable = false)

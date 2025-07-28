@@ -24,6 +24,7 @@ public class CurrencyService {
     CurrencyMapper currencyMapper;
     CurrencyRepository currencyRepository;
 
+
     public CurrencyResponse createCurrency(CurrencyCreationRequest request) {
         if (currencyRepository.existsByName(request.getName())) {
             throw new AppException(ErrorCode.CURRENCY_EXISTED);

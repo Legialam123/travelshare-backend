@@ -26,6 +26,7 @@ public class ExpenseUpdateRequest {
     @Positive(message = "Amount must be positive")
     BigDecimal amount;
 
+    @NotBlank(message = "Currency is required")
     String currency;
 
     @NotNull(message = "Category is required")

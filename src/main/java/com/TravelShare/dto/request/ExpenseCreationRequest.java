@@ -29,6 +29,7 @@ public class ExpenseCreationRequest {
     @NotNull(message = "Group ID is required")
     Long groupId;
 
+    @NotBlank(message = "Currency is required")
     String currency;
 
     @NotNull(message = "Category is required")

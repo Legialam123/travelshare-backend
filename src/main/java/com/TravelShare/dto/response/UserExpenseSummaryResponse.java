@@ -5,6 +5,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -12,6 +13,10 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserExpenseSummaryResponse {
-    BigDecimal totalExpense;
+    BigDecimal total;
+
+    //Multi-currency totals
+    Map<String, BigDecimal> totalsByOriginalCurrency;
+
     List<ExpenseResponse> expenses;
 }

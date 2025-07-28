@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication
 @EnableAsync
 public class TravelShareApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(TravelShareApplication.class, args);
 	}

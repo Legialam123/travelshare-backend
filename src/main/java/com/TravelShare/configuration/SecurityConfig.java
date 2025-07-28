@@ -31,6 +31,11 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS)
                 .permitAll()
+                .requestMatchers(
+                        "/ws/**",
+                        "/test-websocket.html",
+                        "/static/**"
+                ).permitAll()
                 .anyRequest()
                 .authenticated());
 

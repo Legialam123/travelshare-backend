@@ -7,18 +7,31 @@ import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 @EnableCaching
 public class CacheConfig {
+
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("exchange-rates");
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
         cacheManager.setCaffeine(Caffeine.newBuilder()
-                .maximumSize(1000)                              // Tối đa 1000 tỷ giá
-                .expireAfterWrite(Duration.ofMinutes(30))       // Cache 30 phút
-                .recordStats());                                // Theo dõi hiệu suất
+                .maximumSize(1000)                          // Tối đa 1000 entries
+                .expireAfterWrite(24, TimeUnit.HOURS)       // Hết hạn sau 24 giờ
+                .recordStats());                            // Ghi lại thống kê
+        
+        // Đặt tên cache
+        cacheManager.setCacheNames(java.util.Arrays.asList("ocr-cache", "general-cache"));
+        
         return cacheManager;
+    }
+    
+    @Bean
+    public Caffeine<Object, Object> caffeineConfig() {
+        return Caffeine.newBuilder()
+                .maximumSize(500)                           // Cache cho OCR
+                .expireAfterWrite(12, TimeUnit.HOURS)       // Hết hạn sau 12 giờ
+                .recordStats();
     }
 }
