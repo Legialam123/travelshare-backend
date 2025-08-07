@@ -8,6 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface SettlementMapper {
     @Mapping(source = "group.id", target = "groupId")
+    @Mapping(source = "group.name", target = "groupName")
     @Mapping(source = "fromParticipant.id", target = "fromParticipantId")
     @Mapping(source = "fromParticipant.name", target = "fromParticipantName")
     @Mapping(source = "toParticipant.id", target = "toParticipantId")

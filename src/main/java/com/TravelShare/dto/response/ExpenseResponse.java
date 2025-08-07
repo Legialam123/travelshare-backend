@@ -44,5 +44,9 @@ public class ExpenseResponse {
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 
+    Boolean isLocked;
+    LocalDateTime lockedAt;
+    Long lockedByFinalizationId;
+
     int participantCount;
 }

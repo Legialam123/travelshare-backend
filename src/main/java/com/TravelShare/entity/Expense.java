@@ -81,9 +81,21 @@ public class Expense {
 
     LocalDateTime updatedAt;
 
+    // Fields for expense finalization/locking
+    @Column(nullable = false)
+    @Builder.Default
+    Boolean isLocked = false;
+
+    LocalDateTime lockedAt;
+
+    Long lockedByFinalizationId;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (isLocked == null) {
+            isLocked = false;
+        }
     }
 
     @PreUpdate

@@ -1,5 +1,7 @@
 package com.TravelShare.dto.response;
 
+import com.TravelShare.entity.Group;
+import com.TravelShare.entity.User;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -14,12 +16,9 @@ public class RequestResponse {
     Long id;
     String type;
     String status;
-    Long senderId;
-    String senderName;
-    Long receiverId;
-    String receiverName;
-    Long groupId;
-    String groupName;
+    UserSummaryResponse sender;
+    UserSummaryResponse receiver;
+    GroupSummaryResponse group;
     Long referenceId;
     String content;
     String actionUrl;

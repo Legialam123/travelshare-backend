@@ -22,7 +22,7 @@ public class CacheConfig {
                 .recordStats());                            // Ghi lại thống kê
         
         // Đặt tên cache
-        cacheManager.setCacheNames(java.util.Arrays.asList("ocr-cache", "general-cache"));
+        cacheManager.setCacheNames(java.util.Arrays.asList("ocr-cache", "general-cache", "exchange-rates"));
         
         return cacheManager;
     }

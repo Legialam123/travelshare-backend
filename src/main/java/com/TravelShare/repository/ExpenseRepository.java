@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,4 +17,11 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long>, JpaSpec
     List<Expense> findAllByGroupId(Long groupId);
     @Query("SELECT e FROM Expense e WHERE e.payer.user.id = :userId")
     List<Expense> findAllByPayerUserId(@Param("userId") String userId);
+
+    // Methods for expense finalization
+    List<Expense> findByGroupIdAndCreatedAtLessThanEqualAndIsLocked(Long groupId, LocalDateTime createdAt, Boolean isLocked);
+
+    List<Expense> findByGroupIdAndIsLocked(Long groupId, Boolean isLocked);
+
+    long countByGroupIdAndIsLocked(Long groupId, Boolean isLocked);
 }

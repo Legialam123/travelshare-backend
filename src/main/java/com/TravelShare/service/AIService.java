@@ -110,16 +110,24 @@ public class AIService {
 
     private String createIntelligentOCRPrompt() {
         return """
-            Extract receipt info as JSON:
+            Extract receipt info as JSON. IMPORTANT: For amount field, convert Vietnamese number format to decimal:
+            - Remove commas (,),(.) used as thousand separators
+            - Vietnamese format "9,010,000" or "9.010.000" should become "9010000.0"
+            - Vietnamese format "1,500" or "1.500" should become "1500.0"
+            - Always return as decimal number (e.g., 9010000.0, not 9010000)
+            
             {
                 "merchantName": "store name",
-                "amount": 0.0,
+                "amount": 9010000.0,
                 "date": "2024-01-01 12:00:00",
                 "description": "brief description",
                 "categoryName": "category"
             }
             
             Categories: "Ăn uống", "Đi lại & Phương tiện", "Chỗ ở & Lưu trú", "Mua sắm", "Giải trí", "Khác"
+            
+            CRITICAL: When you see amounts like "9,010,000", "9.010.000", interpret this as Vietnamese thousand separators, not decimal points.
+            Convert to: 9010000.0 (nine million ten thousand)
             
             Return only valid JSON.
             """;

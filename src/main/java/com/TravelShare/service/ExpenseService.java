@@ -299,6 +299,10 @@ public class ExpenseService {
     public ExpenseResponse updateExpense(Long expenseId, ExpenseUpdateRequest request) {
         Expense expense = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new AppException(ErrorCode.EXPENSE_NOT_EXISTED));
+        // Validate if expense is locked
+        if (expense.getIsLocked() != null && expense.getIsLocked()) {
+            throw new AppException(ErrorCode.EXPENSE_LOCKED);
+        }
         expenseMapper.updateExpense(expense, request);
 
         if(request.getParticipantId() != null){
@@ -491,6 +495,10 @@ public class ExpenseService {
     public void deleteExpense(Long expenseId) {
         Expense expense = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new AppException(ErrorCode.EXPENSE_NOT_EXISTED));
+        // Validate if expense is locked
+        if (expense.getIsLocked() != null && expense.getIsLocked()) {
+            throw new AppException(ErrorCode.EXPENSE_LOCKED);
+        }
         expenseRepository.deleteById(expenseId);
         eventPublisher.publishEvent(new ExpenseDeletedEvent(this, expense, expense.getCreatedBy()));
     }

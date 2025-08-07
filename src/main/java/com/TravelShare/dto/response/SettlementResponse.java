@@ -16,6 +16,7 @@ public class SettlementResponse {
          Long id;
 
          Long groupId;
+         String groupName;
 
          Long fromParticipantId;
          String fromParticipantName;
@@ -23,6 +24,9 @@ public class SettlementResponse {
 
          Long toParticipantId;
          String toParticipantName;
+
+         UserSummaryResponse fromParticipantUser;
+         UserSummaryResponse toParticipantUser;
 
          BigDecimal amount;
 

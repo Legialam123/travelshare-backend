@@ -5,6 +5,7 @@ import com.TravelShare.dto.request.SettlementCreationRequest;
 import com.TravelShare.dto.request.SettlementUpdateRequest;
 import com.TravelShare.dto.response.BalanceResponse;
 import com.TravelShare.dto.response.SettlementResponse;
+import com.TravelShare.dto.response.UserSummaryResponse;
 import com.TravelShare.entity.*;
 import com.TravelShare.entity.Currency;
 import com.TravelShare.exception.AppException;
@@ -15,6 +16,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +47,7 @@ public class SettlementService {
     public List<SettlementResponse> suggestSettlements(Long groupId, String username) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));
+
 
         // Calculate balances using converted amounts for consistency in group currency
         Map<Long, BigDecimal> balances = calculateBalances(group);
@@ -82,10 +85,17 @@ public class SettlementService {
 
             SettlementResponse suggestion = SettlementResponse.builder()
                     .groupId(group.getId())
+                    .groupName(group.getName())
                     .fromParticipantId(from.getId())
                     .fromParticipantName(from.getName())
                     .toParticipantId(to.getId())
                     .toParticipantName(to.getName())
+                    .fromParticipantUser(
+                            from.getUser() != null ? UserSummaryResponse.from(from.getUser()) : null
+                    )
+                    .toParticipantUser(
+                            to.getUser() != null ? UserSummaryResponse.from(to.getUser()) : null
+                    )
                     .amount(settlementAmount)
                     .currencyCode(group.getDefaultCurrency().getCode()) // Always use group default currency
                     .description("Gợi ý thanh toán từ hệ thống")
@@ -127,7 +137,7 @@ public class SettlementService {
             balances.put(participant.getId(), BigDecimal.ZERO);
         }
 
-        // Process all expenses in the trip
+        // Process all expenses in the group
         List<Expense> expenses = expenseRepository.findAllByGroupId(group.getId());
 
         for (Expense expense : expenses) {
@@ -320,6 +330,7 @@ public class SettlementService {
         Group group = groupRepository.findById(request.getGroupId())
                 .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));
 
+
         GroupParticipant from = participantRepository.findById(request.getFromParticipantId())
                 .orElseThrow(() -> new AppException(ErrorCode.PARTICIPANT_NOT_EXISTED));
 
@@ -342,7 +353,6 @@ public class SettlementService {
                 .build();
 
         settlement = settlementRepository.save(settlement);
-
         User fromUser = from.getUser();
         User toUser = to.getUser();
         String groupName = group.getName();
@@ -366,7 +376,7 @@ public class SettlementService {
             requestService.createRequest(req, toUser);
         }
 
-        // Nếu là xác nhận đã thanh toán (người nợ gửi cho người nhận)
+        //Nếu là xác nhận đã thanh toán (người nợ gửi cho người nhận)
         if (request.getSettlementMethod() != null && request.getStatus() == Settlement.SettlementStatus.PENDING) {
             String content = String.format(
                     "%s xác nhận đã thanh toán cho %s trong nhóm %s, số tiền %s %s",

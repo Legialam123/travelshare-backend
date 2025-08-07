@@ -8,7 +8,10 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class GroupUpdateRequest {
-    String name;
-    Long categoryId;
+public class ExpenseFinalizationRequest {
+    Long groupId;
+
+    String description; // Lý do tất toán
+
+    Integer deadlineDays; // Số ngày deadline (default 7)
 }

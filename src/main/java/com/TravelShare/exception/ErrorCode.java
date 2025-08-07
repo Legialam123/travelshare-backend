@@ -40,8 +40,8 @@ public enum ErrorCode {
     TOKEN_USED(1030, "Your token used", HttpStatus.BAD_REQUEST),
     TOKEN_EXPIRED(1031, "Your token expired", HttpStatus.BAD_REQUEST),
     PARTICIPANT_ALREADY_LINKED(1032, "This participant already linked", HttpStatus.BAD_REQUEST),
-    USER_ALREADY_IN_TRIP(1033, "Bạn đã ở trong chuyến đi này rồi", HttpStatus.BAD_REQUEST),
-    USER_ALREADY_IN_GROUP(1034, "Bạn đã ở trong nhóm này rồi", HttpStatus.BAD_REQUEST),
+    USER_NOT_IN_GROUP(1033, "Bạn không có ở trong nhóm này rồi", HttpStatus.NOT_FOUND),
+    USER_ALREADY_IN_GROUP(1034, "Bạn đã ở trong nhóm này rồi", HttpStatus.NOT_FOUND),
     CANNOT_LEAVE_TRIP_AS_LAST_ADMIN(1035, "Your is last admin in Trip, can't leave", HttpStatus.BAD_REQUEST),
     CANNOT_LEAVE_AS_LAST_ADMIN(1036, "Your is last admin in Group, can't leave", HttpStatus.BAD_REQUEST),
     CANNOT_REMOVE_LAST_ADMIN(1037, "Your is last admin in Group, can't update role", HttpStatus.BAD_REQUEST),
@@ -66,7 +66,13 @@ public enum ErrorCode {
     PARTICIPANT_NOT_IN_GROUP(1056, "Người dùng này không tồn tại trong Group", HttpStatus.BAD_REQUEST),
     ALREADY_INVITED(1057, "Đã gửi lời mời", HttpStatus.BAD_REQUEST),
     TOKEN_NOT_EXISTED(1031, "Token của bạn không tồn tại trong hệ thống", HttpStatus.NOT_FOUND),
-    NO_ADMIN_FOUND(1032, "Không tìm thấy admin", HttpStatus.NOT_FOUND);
+    NO_ADMIN_FOUND(1032, "Không tìm thấy admin", HttpStatus.NOT_FOUND),
+    // Expense Finalization error codes
+    FINALIZATION_NOT_FOUND(1058, "Yêu cầu tất toán không tồn tại", HttpStatus.NOT_FOUND),
+    FINALIZATION_ALREADY_PENDING(1059, "Đã có yêu cầu tất toán đang chờ xử lý", HttpStatus.BAD_REQUEST),
+    FINALIZATION_ALREADY_PROCESSED(1060, "Yêu cầu tất toán đã được xử lý", HttpStatus.BAD_REQUEST),
+    EXPENSE_LOCKED(1061, "Chi phí đã bị khóa, không thể chỉnh sửa", HttpStatus.BAD_REQUEST);
+
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;
         this.message = message;

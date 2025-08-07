@@ -3,6 +3,7 @@ package com.TravelShare.repository;
 import com.TravelShare.entity.Settlement;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface SettlementRepository extends JpaRepository<Settlement,Long> {
@@ -11,4 +12,5 @@ public interface SettlementRepository extends JpaRepository<Settlement,Long> {
     List<Settlement> findByToParticipantId(Long participantId);
     List<Settlement> findByGroupId(Long groupId);
     List<Settlement> findByFromParticipant_User_IdOrToParticipant_User_Id(String userId1, String userId2);
+    List<Settlement> findByStatusAndExpireAtBefore(Settlement.SettlementStatus status, LocalDateTime cutoffTime);
 }

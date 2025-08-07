@@ -1,6 +1,5 @@
 package com.TravelShare.controller;
 
-
 import com.TravelShare.dto.request.RequestCreationRequest;
 import com.TravelShare.dto.response.ApiResponse;
 import com.TravelShare.dto.response.RequestResponse;
@@ -13,9 +12,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -37,6 +38,22 @@ public class RequestController {
                 .build();
     }
 
+    @GetMapping("/my/filter")
+    public ApiResponse<List<RequestResponse>> getMyRequestsWithFilter(
+            @RequestParam(required = false) Long groupId,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false, defaultValue = "all") String direction
+    ) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User receiver = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return ApiResponse.<List<RequestResponse>>builder()
+                .result(requestService.getMyRequestsWithFilter(receiver, groupId, type, fromDate, toDate, direction))
+                .build();
+    }
+
     @GetMapping("/sent")
     public ApiResponse<List<RequestResponse>> getMySentRequests() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -44,6 +61,20 @@ public class RequestController {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         return ApiResponse.<List<RequestResponse>>builder()
                 .result(requestService.getRequestsBySender(sender))
+                .build();
+    }
+
+    @GetMapping("/sent/filter")
+    public ApiResponse<List<RequestResponse>> getMySentRequestsWithFilter(
+            @RequestParam(required = false) Long groupId,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User sender = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return ApiResponse.<List<RequestResponse>>builder()
+                .result(requestService.getRequestsBySenderWithFilter(sender, groupId, type, fromDate, toDate))
                 .build();
     }
 
@@ -58,13 +89,12 @@ public class RequestController {
     }
 
     @PostMapping("/{id}/payment-confirm")
-    public ApiResponse<RequestResponse> sendPaymentConfirm(@PathVariable Long id) {
+    public ApiResponse<Void> sendPaymentConfirm(@PathVariable Long id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User sender = userRepository.findByUsername(username)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        return ApiResponse.<RequestResponse>builder()
-                .result(requestService.sendPaymentConfirm(id, sender))
-                .build();
+        requestService.sendPaymentConfirm(id, user);
+        return ApiResponse.<Void>builder().build();
     }
 
     @PostMapping("/{id}/accept")
@@ -87,26 +117,21 @@ public class RequestController {
                 .build();
     }
 
-    @DeleteMapping("/{id}/delete")
-    public ApiResponse<String> deleteRequest(@PathVariable Long id) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        requestService.deleteRequest(id, user);
-        return ApiResponse.<String>builder()
-                .result("Yêu cầu đã được xóa bỏ !")
-                .build();
-    }
-
     @PatchMapping("/{id}/cancel")
-    public ApiResponse<String> cancelRequest(@PathVariable Long id) {
+    public ApiResponse<Void> cancelRequest(@PathVariable Long id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         requestService.cancelRequest(id, user);
-        return ApiResponse.<String>builder()
-                .result("Yêu cầu đã được hủy bỏ !")
-                .build();
+        return ApiResponse.<Void>builder().build();
     }
 
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteRequest(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        requestService.deleteRequest(id, user);
+        return ApiResponse.<Void>builder().build();
+    }
 }

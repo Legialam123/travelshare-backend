@@ -25,6 +25,7 @@ public interface GroupMapper {
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "participants", ignore = true)
+    @Mapping(target = "category", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateGroup(@MappingTarget Group group, GroupUpdateRequest request);
 }

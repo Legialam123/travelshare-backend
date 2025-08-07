@@ -297,9 +297,12 @@ public class GroupService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new AppException(ErrorCode.GROUP_NOT_EXISTED));
+        if(request.getCategoryId() != null)
+        group.setCategory(categoryRepository.findById(request.getCategoryId()
+                ).orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED)));
         groupMapper.updateGroup(group, request);
         eventPublisher.publishEvent(new GroupUpdatedEvent(this, group, user));
-        return groupMapper.toGroupResponse(group);
+        return groupMapper.toGroupResponse(groupRepository.save(group));
     }
 
     public void deleteGroup(Long groupId) {

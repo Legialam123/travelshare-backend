@@ -41,6 +41,8 @@ public class Settlement {
 
     LocalDateTime settledAt;
 
+    LocalDateTime expireAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     SettlementStatus status;
@@ -70,6 +72,12 @@ public class Settlement {
         createdAt = LocalDateTime.now();
         if ( status == null) {
             status = SettlementStatus.PENDING;
+        }
+        if( settlementMethod == SettlementMethod.VNPAY && expireAt == null) {
+            expireAt = LocalDateTime.now().plusMinutes(30); // Default expiration for VNPAY settlements
+        }
+        if (status == Settlement.SettlementStatus.COMPLETED) {
+            settledAt = LocalDateTime.now();
         }
     }
 }
